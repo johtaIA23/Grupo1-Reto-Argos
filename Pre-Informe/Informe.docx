@@ -1,1 +1,70 @@
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Jerónimo
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Flujo de la Solución
+Objetivo: Construir un sistema automatizado que levante, enriquezca y visualice el censo digital de ferreterías en Colombia para Cementos Argos, permitiendo identificar clientes potenciales para el canal de distribución de cemento.
 
+Fases del proceso: 1. RECOLECCIÓN     → CSV de Cámaras de Comercio (48.237 registros)
+                   2. ALMACENAMIENTO  → Supabase (PostgreSQL en la nube)
+                   3. ENRIQUECIMIENTO → Google Maps (coordenadas, ciudad, departamento)
+                                     + Groq IA (extracción inteligente de ubicación)
+                                     + Groq IA (detección y limpieza de duplicados)
+                   4. EXPORTACIÓN     → Google Sheets (datos listos para análisis comercial)
+                   5. VISUALIZACIÓN   → Dashboard web con estadísticas, filtros y agente IA.
+
+Tecnologías y Herramientas Utilizadas:        Herramienta	                            Rol	                                          Costo
+                                      n8n (self-hosted, Docker)	            Orquestador de workflows	                              Gratis
+                                      Supabase	                            Base de datos PostgreSQL en la nube	                    Gratis (tier free)
+                                      FastAPI + Python	                    API de consulta y dashboard web	                        Gratis
+                                      Docker Desktop	                      Contenedores locales	                                  Gratis
+                                      Google Maps Places API	              Geocodificación (coordenadas, dirección)	              $0.032/req
+                                      Groq API (llama-3.1-8b)	              Extracción de ubicación + control de duplicados con IA	Gratis
+                                      Google Sheets API	                    Exportación de datos enriquecidos	                      Gratis
+
+Herramientas de Pago que Mejorarían el Proceso:   
+                                          Herramienta	                    Ventaja sobre la solución actual	                                                        Costo estimado
+                                      Informatica MDM	                Gestión de datos maestros a nivel empresarial, deduplicación avanzada	                       $50.000+/año
+                                      Melissa Data	                  Limpieza, normalización y deduplicación profesional de contactos y direcciones	             $300-500/mes
+                                      ZoomInfo	                      Enriquecimiento automático con datos financieros, empleados y contactos de empresas	         $10.000+/año
+                                      Talend Data Quality	            Plataforma completa de calidad de datos con reglas configurables	                           $500+/mes
+                                      Google Maps Platform (escala)	  Sin límites de rate, mayor precisión, SLA garantizado	                                       Ejemplo: $1.536 para 48k registros
+                                      n8n Cloud	                      Sin servidor local, ejecuciones programadas en la nube, alta disponibilidad	                 $20/mes
+                                      Supabase Pro	                  Más almacenamiento, backups automáticos, sin pausas por inactividad	                         $25/mes
+
+Problemas y Limitantes Encontrados:   
+                                            Problema	                                              Herramienta	                                    Solución Aplicada
+                              Docker no corría con WSL2	                                          Docker Desktop	                          Cambio a backend Hyper-V via BIOS
+                              process.env no disponible en Code nodes	                            n8n 2.14	                                Reemplazado por $env
+                              OpenAI sin crédito disponible (error 429)	                          OpenAI API	                              Reemplazado con Groq (gratuito)
+                              Error 400 en filtro lat=not.is.null	Supabase                        REST API	                                Filtro aplicado en JavaScript post-query
+                              Google Maps devuelve direcciones de otros países	                  Google Maps API	                          Validación posterior con Groq IA
+                              Esquema de herramienta incompatible con Groq	                      n8n + Groq	                              Cambio de GET query params a POST JSON body
+                              Workflows se desactivan al reiniciar Docker	                        n8n	                                      Reactivación manual tras cada restart
+                              Contenedores bloqueados sin poder detenerse	                        Docker Desktop	                          Restart completo de Docker Desktop
+                              Google Sheets requiere columna match en "Append or Update"	        Google Sheets + n8n	                      Cambio a operación simple "Append Row"
+                              Parsing incorrecto de ciudad/departamento en direcciones cortas	    Procesamiento de texto	                  Reemplazado con modelo IA Groq
+
+Estructura del Dataset (muestra):
+                                        Campo	                                    Tipo	                          Ejemplo
+                                    razon_social	                                texto	                        FERRETERÍA EL CONSTRUCTOR S.A.S
+                                    nit	                                          texto	                        900123456-1
+                                    camara_comercio	                              texto	                        MEDELLIN PARA ANTIOQUIA
+                                    representante_legal	                          texto	                        GARCÍA LÓPEZ CARLOS MARIO
+                                    organizacion_juridica	                        texto	                        Sociedad por Acciones Simplificada
+                                    estado_matricula	                            texto	                        ACTIVA
+                                    fecha_matricula	                              fecha	                        2015-03-12
+                                    fecha_renovacion	                            fecha	                        2024-01-08
+                                    direccion	                                    texto	                        Cra. 50 #32-18, El Poblado
+                                    ciudad	                                      texto	                        Medellín
+                                    departamento	                                texto	                        Antioquia
+                                    telefono	                                    texto	                        3104567890
+                                    lat	                                          decimal	                      6.2087
+                                    lng	                                          decimal	                      -75.5659
+                                    formatted_address	                            texto	                        Cra. 50 #32-18, El Poblado, Medellín, Antioquia
+                                    estado_info	                                  calculado	                    Completa / Incompleta
+                                    estado_legal	                                calculado	                    Legalmente constituida
+                                    estado_actividad	                            texto	                        Pendiente
+                                    geocodificado	                                booleano	                    true / false
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
