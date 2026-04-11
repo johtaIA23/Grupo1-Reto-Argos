@@ -1,0 +1,152 @@
+{
+  "name": "06 - Sub: Enriquecimiento Google Maps",
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "id": "a6b6c6d6-0006-0001-0001-000000000001",
+      "name": "Cuando lo llama el Orquestador",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1,
+      "position": [0, 300]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Obtiene el siguiente lote de ferreterías sin coordenadas\nconst SUPABASE_URL = $env.SUPABASE_URL;\nconst SUPABASE_KEY = $env.SUPABASE_SERVICE_KEY;\nif (!SUPABASE_URL || !SUPABASE_KEY) throw new Error('Faltan variables SUPABASE_URL o SUPABASE_SERVICE_KEY');\n\nconst staticData = $getWorkflowStaticData('global');\nif (!staticData.offset) staticData.offset = 0;\nif (!staticData.totalEnriquecidos) staticData.totalEnriquecidos = 0;\nif (!staticData.totalFallidos) staticData.totalFallidos = 0;\n\nconst LIMIT = 500;\nconst resp = await this.helpers.httpRequest({\n  method: 'GET',\n  url: `${SUPABASE_URL}/rest/v1/ferreterias?select=id,razon_social,ciudad,departamento&lat=is.null&order=id.asc&limit=${LIMIT}&offset=${staticData.offset}`,\n  headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }\n});\n\nif (!Array.isArray(resp) || resp.length === 0) {\n  return [{ json: { _fin: true, total_enriquecidos: staticData.totalEnriquecidos, total_fallidos: staticData.totalFallidos, mensaje: 'Todas las ferreterías ya tienen coordenadas.' } }];\n}\n\nstaticData.offset += resp.length;\nconst tieneMas = resp.length === LIMIT;\n\nconsole.log(`Lote: ${resp.length} registros sin coordenadas (offset=${staticData.offset - resp.length})`);\nreturn resp.map(r => ({ json: { ...r, _tiene_mas: tieneMas } }));"
+      },
+      "id": "a6b6c6d6-0006-0001-0001-000000000002",
+      "name": "Obtener Sin Coordenadas",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [220, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "conditions": [
+            {
+              "id": "check-fin",
+              "leftValue": "={{ $json._fin }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "equals" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "a6b6c6d6-0006-0001-0001-000000000003",
+      "name": "¿Terminó?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [440, 300]
+    },
+    {
+      "parameters": {
+        "batchSize": 10,
+        "options": {}
+      },
+      "id": "a6b6c6d6-0006-0001-0001-000000000004",
+      "name": "Lotes de 10",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [660, 460]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Busca en Google Places cada ferretería del lote\nconst MAPS_KEY = $env.GOOGLE_MAPS_API_KEY;\nconst SUPABASE_URL = $env.SUPABASE_URL;\nconst SUPABASE_KEY = $env.SUPABASE_SERVICE_KEY;\nif (!MAPS_KEY) throw new Error('Falta variable GOOGLE_MAPS_API_KEY');\n\nconst items = $input.all();\nconst staticData = $getWorkflowStaticData('global');\nconst resultados = [];\n\nfor (const item of items) {\n  const { id, razon_social, ciudad, departamento } = item.json;\n  if (!razon_social) continue;\n\n  const queryStr = `${razon_social} ferreteria ${ciudad || ''} ${departamento || ''} Colombia`.trim();\n  let lat = null, lng = null, formatted_address = null, google_place_id = null;\n\n  try {\n    const searchResp = await this.helpers.httpRequest({\n      method: 'GET',\n      url: `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(queryStr)}&key=${MAPS_KEY}&language=es&region=co`,\n      headers: {}\n    });\n\n    if (searchResp.status === 'OK' && searchResp.results && searchResp.results.length > 0) {\n      const place = searchResp.results[0];\n      lat = place.geometry?.location?.lat || null;\n      lng = place.geometry?.location?.lng || null;\n      formatted_address = place.formatted_address || null;\n      google_place_id   = place.place_id || null;\n    }\n  } catch(e) {\n    console.error(`Error Maps para ${razon_social}: ${e.message}`);\n  }\n\n  // Actualizar en Supabase\n  if (lat !== null && lng !== null) {\n    try {\n      await this.helpers.httpRequest({\n        method: 'PATCH',\n        url: `${SUPABASE_URL}/rest/v1/ferreterias?id=eq.${id}`,\n        headers: {\n          'apikey': SUPABASE_KEY,\n          'Authorization': `Bearer ${SUPABASE_KEY}`,\n          'Content-Type': 'application/json',\n          'Prefer': 'return=minimal'\n        },\n        body: JSON.stringify({ lat, lng, formatted_address, google_place_id })\n      });\n      staticData.totalEnriquecidos = (staticData.totalEnriquecidos || 0) + 1;\n    } catch(e) {\n      console.error(`Error actualizando Supabase id=${id}: ${e.message}`);\n      staticData.totalFallidos = (staticData.totalFallidos || 0) + 1;\n    }\n  } else {\n    staticData.totalFallidos = (staticData.totalFallidos || 0) + 1;\n  }\n\n  // Pequeña pausa para no saturar la API\n  await new Promise(r => setTimeout(r, 200));\n\n  resultados.push({ json: { id, razon_social, lat, lng, formatted_address, enriquecido: lat !== null } });\n}\n\nconsole.log(`Lote procesado. Enriquecidos total: ${staticData.totalEnriquecidos}, Fallidos: ${staticData.totalFallidos}`);\nreturn resultados;"
+      },
+      "id": "a6b6c6d6-0006-0001-0001-000000000005",
+      "name": "Buscar en Google Maps y Actualizar",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [880, 460]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Si quedan más registros en Supabase, vuelve a obtener el siguiente lote\nconst staticData = $getWorkflowStaticData('global');\nconst items = $input.all();\nconst tieneMas = items.some(i => i.json._tiene_mas === true) || false;\nconsole.log(`¿Tiene más? ${tieneMas} | Offset actual: ${staticData.offset}`);\nreturn [{ json: { _continuar: tieneMas, offset: staticData.offset, total_enriquecidos: staticData.totalEnriquecidos, total_fallidos: staticData.totalFallidos } }];"
+      },
+      "id": "a6b6c6d6-0006-0001-0001-000000000006",
+      "name": "¿Más lotes?",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1100, 460]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "conditions": [
+            {
+              "id": "check-continuar",
+              "leftValue": "={{ $json._continuar }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "equals" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "a6b6c6d6-0006-0001-0001-000000000007",
+      "name": "¿Continuar?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1320, 460]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const staticData = $getWorkflowStaticData('global');\nconst resumen = { estado: 'ENRIQUECIMIENTO COMPLETADO', total_enriquecidos: staticData.totalEnriquecidos||0, total_fallidos: staticData.totalFallidos||0, mensaje: `Se agregaron coordenadas a ${staticData.totalEnriquecidos||0} ferreterías. ${staticData.totalFallidos||0} no encontradas en Google Maps.` };\nconsole.log(JSON.stringify(resumen, null, 2));\nreturn [{ json: resumen }];"
+      },
+      "id": "a6b6c6d6-0006-0001-0001-000000000008",
+      "name": "Resumen Final",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [660, 140]
+    }
+  ],
+  "connections": {
+    "Cuando lo llama el Orquestador": {
+      "main": [[{ "node": "Obtener Sin Coordenadas", "type": "main", "index": 0 }]]
+    },
+    "Obtener Sin Coordenadas": {
+      "main": [[{ "node": "¿Terminó?", "type": "main", "index": 0 }]]
+    },
+    "¿Terminó?": {
+      "main": [
+        [{ "node": "Resumen Final", "type": "main", "index": 0 }],
+        [{ "node": "Lotes de 10", "type": "main", "index": 0 }]
+      ]
+    },
+    "Lotes de 10": {
+      "main": [
+        [],
+        [{ "node": "Buscar en Google Maps y Actualizar", "type": "main", "index": 0 }]
+      ]
+    },
+    "Buscar en Google Maps y Actualizar": {
+      "main": [[{ "node": "¿Más lotes?", "type": "main", "index": 0 }]]
+    },
+    "¿Más lotes?": {
+      "main": [[{ "node": "¿Continuar?", "type": "main", "index": 0 }]]
+    },
+    "¿Continuar?": {
+      "main": [
+        [{ "node": "Resumen Final", "type": "main", "index": 0 }],
+        [{ "node": "Obtener Sin Coordenadas", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveExecutionProgress": true
+  },
+  "versionId": "06-sub-enriquecimiento-maps-v1"
+}

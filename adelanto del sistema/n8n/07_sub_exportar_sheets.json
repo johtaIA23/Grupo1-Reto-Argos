@@ -1,0 +1,123 @@
+{
+  "name": "07 - Sub: Exportar Google Sheets",
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "id": "a7b7c7d7-0007-0001-0001-000000000001",
+      "name": "Cuando lo llama el Orquestador",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1,
+      "position": [0, 300]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Consulta Supabase y devuelve todas las ferreterías con las columnas del negocio\nconst SUPABASE_URL = $env.SUPABASE_URL;\nconst SUPABASE_KEY = $env.SUPABASE_SERVICE_KEY;\nif (!SUPABASE_URL || !SUPABASE_KEY) throw new Error('Faltan variables SUPABASE_URL o SUPABASE_SERVICE_KEY');\n\nconst todos = [];\nlet offset = 0;\nconst limit = 1000;\n\nwhile (true) {\n  const resp = await this.helpers.httpRequest({\n    method: 'GET',\n    url: `${SUPABASE_URL}/rest/v1/ferreterias?select=razon_social,representante_legal,telefono,formatted_address,direccion,lng,lat,estado_actividad,estado_legal,ciudad,departamento&order=razon_social.asc&limit=${limit}&offset=${offset}`,\n    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }\n  });\n\n  if (!Array.isArray(resp) || resp.length === 0) break;\n\n  for (const r of resp) {\n    todos.push({ json: {\n      nombre:          r.razon_social || '',\n      representante:   r.representante_legal || '',\n      telefono:        r.telefono || '',\n      direccion:       r.formatted_address || r.direccion || '',\n      longitud:        r.lng || '',\n      latitud:         r.lat || '',\n      estado:          r.estado_actividad || 'Pendiente',\n      estado_legal:    r.estado_legal || '',\n      ciudad:          r.ciudad || '',\n      departamento:    r.departamento || ''\n    }});\n  }\n\n  offset += resp.length;\n  if (resp.length < limit) break;\n}\n\nconsole.log(`Exportando ${todos.length} registros a Google Sheets...`);\nif (todos.length === 0) return [{ json: { mensaje: 'No hay registros para exportar.' } }];\nreturn todos;"
+      },
+      "id": "a7b7c7d7-0007-0001-0001-000000000002",
+      "name": "Obtener Datos de Supabase",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [220, 300]
+    },
+    {
+      "parameters": {
+        "batchSize": 1000,
+        "options": {}
+      },
+      "id": "a7b7c7d7-0007-0001-0001-000000000003",
+      "name": "División en Lotes",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [440, 300]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "AQUI_VA_EL_ID_DE_TU_HOJA",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "id"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "nombre":       "={{ $json.nombre }}",
+            "representante":"={{ $json.representante }}",
+            "telefono":     "={{ $json.telefono }}",
+            "direccion":    "={{ $json.direccion }}",
+            "longitud":     "={{ $json.longitud }}",
+            "latitud":      "={{ $json.latitud }}",
+            "estado":       "={{ $json.estado }}",
+            "estado_legal": "={{ $json.estado_legal }}",
+            "ciudad":       "={{ $json.ciudad }}",
+            "departamento": "={{ $json.departamento }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            { "id": "nombre",       "displayName": "nombre",       "required": false, "defaultMatch": false, "canBeUsedToMatch": true },
+            { "id": "representante","displayName": "representante", "required": false, "defaultMatch": false, "canBeUsedToMatch": false },
+            { "id": "telefono",     "displayName": "telefono",     "required": false, "defaultMatch": false, "canBeUsedToMatch": false },
+            { "id": "direccion",    "displayName": "direccion",    "required": false, "defaultMatch": false, "canBeUsedToMatch": false },
+            { "id": "longitud",     "displayName": "longitud",     "required": false, "defaultMatch": false, "canBeUsedToMatch": false },
+            { "id": "latitud",      "displayName": "latitud",      "required": false, "defaultMatch": false, "canBeUsedToMatch": false },
+            { "id": "estado",       "displayName": "estado",       "required": false, "defaultMatch": false, "canBeUsedToMatch": false },
+            { "id": "estado_legal", "displayName": "estado_legal", "required": false, "defaultMatch": false, "canBeUsedToMatch": false },
+            { "id": "ciudad",       "displayName": "ciudad",       "required": false, "defaultMatch": false, "canBeUsedToMatch": false },
+            { "id": "departamento", "displayName": "departamento", "required": false, "defaultMatch": false, "canBeUsedToMatch": false }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a7b7c7d7-0007-0001-0001-000000000004",
+      "name": "Escribir en Google Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [660, 140],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "AQUI_VA_ID_CREDENCIAL_SHEETS",
+          "name": "Google Sheets - Ferreterías Colombia"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "return [{ json: { estado: 'EXPORTACIÓN COMPLETADA', mensaje: 'Datos escritos en Google Sheets correctamente.' } }];"
+      },
+      "id": "a7b7c7d7-0007-0001-0001-000000000005",
+      "name": "Exportación Completada",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [660, 460]
+    }
+  ],
+  "connections": {
+    "Cuando lo llama el Orquestador": {
+      "main": [[{ "node": "Obtener Datos de Supabase", "type": "main", "index": 0 }]]
+    },
+    "Obtener Datos de Supabase": {
+      "main": [[{ "node": "División en Lotes", "type": "main", "index": 0 }]]
+    },
+    "División en Lotes": {
+      "main": [
+        [{ "node": "Exportación Completada", "type": "main", "index": 0 }],
+        [{ "node": "Escribir en Google Sheets", "type": "main", "index": 0 }]
+      ]
+    },
+    "Escribir en Google Sheets": {
+      "main": [[{ "node": "División en Lotes", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "versionId": "07-sub-exportar-sheets-v1"
+}

@@ -1,0 +1,95 @@
+<!-- ═══════════════════════════════════════════════════════
+     SECCIÓN: DATOS — Tabla filtrable de ferreterías
+     ═══════════════════════════════════════════════════════ -->
+<div data-section="datos" class="space-y-4">
+
+  <!-- Panel de filtros -->
+  <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+
+      <div>
+        <label class="text-xs text-gray-500 mb-1 block">Departamento</label>
+        <select id="f-departamento" onchange="aplicarFiltros()"
+          class="w-full text-sm border border-gray-200 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-400">
+          <option value="">Todos</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="text-xs text-gray-500 mb-1 block">Ciudad</label>
+        <select id="f-ciudad" onchange="aplicarFiltros()"
+          class="w-full text-sm border border-gray-200 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-400">
+          <option value="">Todas</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="text-xs text-gray-500 mb-1 block">Estado Información</label>
+        <select id="f-estado-info" onchange="aplicarFiltros()"
+          class="w-full text-sm border border-gray-200 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-400">
+          <option value="">Todos</option>
+          <option value="Completa">Completa</option>
+          <option value="Incompleta">Incompleta</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="text-xs text-gray-500 mb-1 block">Estado Legal</label>
+        <select id="f-estado-legal" onchange="aplicarFiltros()"
+          class="w-full text-sm border border-gray-200 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-400">
+          <option value="">Todos</option>
+          <option value="Legalmente constituida">Legalmente constituida</option>
+          <option value="No legalmente constituida">No legalmente constituida</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="text-xs text-gray-500 mb-1 block">Buscar nombre</label>
+        <input id="f-busqueda" type="text" placeholder="Ej: Ferretería Central"
+          oninput="debouncedFiltros()"
+          class="w-full text-sm border border-gray-200 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-400" />
+      </div>
+
+    </div>
+    <div class="flex items-center justify-between mt-3">
+      <p class="text-xs text-gray-500">
+        Mostrando <span id="tabla-count" class="font-semibold text-gray-700">—</span> registros
+      </p>
+      <button onclick="limpiarFiltros()" class="text-xs text-blue-600 hover:underline">Limpiar filtros</button>
+    </div>
+  </div>
+
+  <!-- Tabla -->
+  <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="thead-navy border-b border-gray-100">
+            <th class="px-4 py-3 text-left text-xs font-semibold text-white/80 uppercase tracking-wide">Razón Social</th>
+            <th class="px-4 py-3 text-left text-xs font-semibold text-white/80 uppercase tracking-wide">NIT</th>
+            <th class="px-4 py-3 text-left text-xs font-semibold text-white/80 uppercase tracking-wide">Ciudad</th>
+            <th class="px-4 py-3 text-left text-xs font-semibold text-white/80 uppercase tracking-wide">Departamento</th>
+            <th class="px-4 py-3 text-left text-xs font-semibold text-white/80 uppercase tracking-wide">Teléfono</th>
+            <th class="px-4 py-3 text-left text-xs font-semibold text-white/80 uppercase tracking-wide">Estado Info</th>
+            <th class="px-4 py-3 text-left text-xs font-semibold text-white/80 uppercase tracking-wide">Estado Legal</th>
+          </tr>
+        </thead>
+        <tbody id="tabla-body">
+          <tr><td colspan="7" class="px-4 py-8 text-center text-gray-400 text-sm">Cargando datos...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Paginación -->
+    <div class="flex items-center justify-between px-4 py-3 border-t border-gray-100 bg-gray-50">
+      <button onclick="cambiarPagina(-1)" id="btn-prev"
+        class="text-xs px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-white disabled:opacity-40"
+        disabled>← Anterior</button>
+      <span class="text-xs text-gray-500" id="paginacion-info">Página 1</span>
+      <button onclick="cambiarPagina(1)" id="btn-next"
+        class="text-xs px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-white disabled:opacity-40">
+        Siguiente →</button>
+    </div>
+  </div>
+
+</div>

@@ -1,0 +1,541 @@
+<script>
+// ══════════════════════════════════════════════════════════════
+// SCRIPTS — Lógica del dashboard Ferreterías Colombia
+// Organización:
+//   1. Utilidades generales
+//   2. Navegación entre secciones
+//   3. Estadísticas y gráficas (sección Resumen)
+//   4. Tabla de datos con filtros y paginación (sección Datos)
+//   5. Modal de detalle de ferretería
+//   6. Chat con el Agente IA (sección Agente)
+//   7. Control de procesos y recarga de CSV (sección Procesos)
+//   8. Inicialización
+// ══════════════════════════════════════════════════════════════
+
+// ── 1. Utilidades generales ───────────────────────────────────
+
+const API = '';  // mismo origen que el dashboard
+
+let chartInfo, chartLegal, chartDep;
+
+/** Formatea número con separadores colombianos (48.237) */
+function fmt(n) {
+  return typeof n === 'number' ? n.toLocaleString('es-CO') : '—';
+}
+
+/** Calcula porcentaje sobre el total */
+function pct(a, total) {
+  return total > 0 ? ` (${((a / total) * 100).toFixed(1)}%)` : '';
+}
+
+/** Ejecuta fn después de ms milisegundos de inactividad */
+function debounce(fn, ms) {
+  let t;
+  return function (...args) {
+    clearTimeout(t);
+    t = setTimeout(() => fn.apply(this, args), ms);
+  };
+}
+
+const debouncedFiltros = debounce(aplicarFiltros, 400);
+
+
+// ── 2. Navegación entre secciones ────────────────────────────
+
+const titulos = {
+  resumen:         ['Resumen General',        'Visión general del censo de ferreterías'],
+  datos:           ['Explorar Datos',          'Filtra, busca y navega por los registros'],
+  agente:          ['Agente IA',               'Consulta en lenguaje natural'],
+  procesos:        ['Gestión de Procesos',     'Ejecuta y programa los workflows de n8n'],
+  'sin-ubicacion': ['Sin Ubicación en Maps',  'Ferreterías legalmente constituidas no geocodificadas'],
+};
+
+function showSection(name) {
+  document.querySelectorAll('[data-section]').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('[data-nav]').forEach(el => el.classList.remove('active'));
+  document.querySelector(`[data-section="${name}"]`).classList.add('active');
+  document.querySelector(`[data-nav="${name}"]`).classList.add('active');
+  const [title, sub] = titulos[name] || [name, ''];
+  document.getElementById('page-title').textContent = title;
+  document.getElementById('page-sub').textContent   = sub;
+  if (name === 'datos' && !tablaInicializada) initTabla();
+  if (name === 'sin-ubicacion' && !suInicializado) initSinUbicacion();
+}
+
+
+// ── 3. Estadísticas y gráficas ────────────────────────────────
+
+async function cargarEstadisticas() {
+  try {
+    const r = await fetch(`${API}/estadisticas`);
+    const d = await r.json();
+    const total = d.total_registros;
+
+    // Tarjetas de métricas
+    document.getElementById('stat-total').textContent = fmt(total);
+    const completa = d.estado_info['Completa'] || 0;
+    const legal    = d.estado_legal['Legalmente constituida'] || 0;
+    document.getElementById('stat-completa').textContent     = fmt(completa);
+    document.getElementById('stat-completa-pct').textContent = `${pct(completa, total)} del total`;
+    document.getElementById('stat-legal').textContent        = fmt(legal);
+    document.getElementById('stat-legal-pct').textContent    = `${pct(legal, total)} del total`;
+    document.getElementById('stat-telefono').textContent     = fmt(d.con_telefono);
+    document.getElementById('stat-telefono-pct').textContent = `${pct(d.con_telefono, total)} con teléfono`;
+
+    renderCharts(d);
+    renderCamaras(d.por_camara_comercio);
+
+    // Indicador de estado
+    document.getElementById('status-dot').style.background = '#22c55e';
+    document.getElementById('status-text').textContent     = 'API activa';
+    document.getElementById('status-records').textContent  = `${fmt(total)} registros`;
+    document.getElementById('last-update').textContent     = `Actualizado ${new Date().toLocaleTimeString('es-CO')}`;
+
+  } catch (e) {
+    document.getElementById('status-dot').style.background = '#ef4444';
+    document.getElementById('status-text').textContent     = 'Sin conexión';
+  }
+}
+
+function renderCharts(d) {
+  const total  = d.total_registros;
+  const navy   = '#0f2d4a';
+  const accent = '#e85d04';
+
+  // Donut — Estado de Información
+  if (chartInfo) chartInfo.destroy();
+  chartInfo = new Chart(document.getElementById('chart-info'), {
+    type: 'doughnut',
+    data: {
+      labels: ['Completa', 'Incompleta'],
+      datasets: [{
+        data: [d.estado_info['Completa'] || 0, d.estado_info['Incompleta'] || 0],
+        backgroundColor: ['#22c55e', '#f59e0b'],
+        borderWidth: 0,
+      }],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: '65%',
+      plugins: {
+        legend: { position: 'bottom', labels: { font: { size: 11 }, boxWidth: 12 } },
+        tooltip: { callbacks: { label: ctx => ` ${fmt(ctx.parsed)} ${pct(ctx.parsed, total)}` } },
+      },
+    },
+  });
+
+  // Donut — Estado Legal
+  if (chartLegal) chartLegal.destroy();
+  chartLegal = new Chart(document.getElementById('chart-legal'), {
+    type: 'doughnut',
+    data: {
+      labels: ['Legalmente constituida', 'No legalmente constituida'],
+      datasets: [{
+        data: [
+          d.estado_legal['Legalmente constituida'] || 0,
+          d.estado_legal['No legalmente constituida'] || 0,
+        ],
+        backgroundColor: [navy, '#94a3b8'],
+        borderWidth: 0,
+      }],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: '65%',
+      plugins: {
+        legend: { position: 'bottom', labels: { font: { size: 11 }, boxWidth: 12 } },
+        tooltip: { callbacks: { label: ctx => ` ${fmt(ctx.parsed)} ${pct(ctx.parsed, total)}` } },
+      },
+    },
+  });
+
+  // Barra horizontal — Top 10 Departamentos
+  const deps = Object.entries(d.por_departamento || {}).slice(0, 10);
+  if (chartDep) chartDep.destroy();
+  chartDep = new Chart(document.getElementById('chart-dep'), {
+    type: 'bar',
+    data: {
+      labels: deps.map(([k]) => k.length > 14 ? k.slice(0, 13) + '…' : k),
+      datasets: [{
+        data: deps.map(([, v]) => v),
+        backgroundColor: accent,
+        borderRadius: 4,
+      }],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      indexAxis: 'y',
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { display: false }, ticks: { font: { size: 10 } } },
+        y: { grid: { display: false }, ticks: { font: { size: 10 } } },
+      },
+    },
+  });
+}
+
+function renderCamaras(camaras) {
+  const el = document.getElementById('camaras-list');
+  el.innerHTML = '';
+  const bg   = ['#dbeafe','#dcfce7','#fef9c3','#fce7f3','#f3e8ff','#e0f2fe'];
+  const text = ['#1e40af','#166534','#854d0e','#9d174d','#6b21a8','#0e7490'];
+  Object.entries(camaras || {}).slice(0, 15).forEach(([name, count], i) => {
+    const ci = i % bg.length;
+    el.innerHTML += `<span style="background:${bg[ci]};color:${text[ci]}"
+      class="badge text-xs px-3 py-1 rounded-full font-medium">
+      ${name} <span class="ml-1 opacity-70">${fmt(count)}</span>
+    </span>`;
+  });
+}
+
+
+// ── 4. Tabla de datos ─────────────────────────────────────────
+
+let tablaInicializada  = false;
+let tablaPagina        = 0;
+const tablaLimit       = 50;
+let tablaTotalEncontrados = 0;
+
+async function initTabla() {
+  tablaInicializada = true;
+  await cargarOpciones();
+  await cargarTabla();
+}
+
+async function cargarOpciones() {
+  try {
+    const r = await fetch(`${API}/opciones`);
+    const d = await r.json();
+    llenarSelect('f-departamento', d.departamentos || []);
+    llenarSelect('f-ciudad', d.ciudades || []);
+  } catch (e) {}
+}
+
+function llenarSelect(id, opciones) {
+  const sel     = document.getElementById(id);
+  const current = sel.value;
+  while (sel.options.length > 1) sel.remove(1);
+  opciones.forEach(v => sel.appendChild(new Option(v, v)));
+  sel.value = current;
+}
+
+async function cargarTabla() {
+  const params = new URLSearchParams({ limit: tablaLimit, offset: tablaPagina * tablaLimit });
+  const dep    = document.getElementById('f-departamento').value;
+  const ciudad = document.getElementById('f-ciudad').value;
+  const ei     = document.getElementById('f-estado-info').value;
+  const el     = document.getElementById('f-estado-legal').value;
+  const bq     = document.getElementById('f-busqueda').value.trim();
+  if (dep)    params.set('departamento', dep);
+  if (ciudad) params.set('ciudad', ciudad);
+  if (ei)     params.set('estado_info', ei);
+  if (el)     params.set('estado_legal', el);
+  if (bq)     params.set('busqueda', bq);
+
+  const tbody = document.getElementById('tabla-body');
+  tbody.innerHTML = `<tr><td colspan="7" class="px-4 py-8 text-center"><div class="spinner mx-auto"></div></td></tr>`;
+
+  try {
+    const r = await fetch(`${API}/consultar?${params}`);
+    const d = await r.json();
+    tablaTotalEncontrados = d.total_encontrados;
+
+    document.getElementById('tabla-count').textContent =
+      `${fmt(d.total_encontrados)} (mostrando ${d.registros_en_pagina})`;
+
+    if (d.data.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="7" class="px-4 py-8 text-center text-gray-400">Sin resultados</td></tr>`;
+    } else {
+      tbody.innerHTML = d.data.map(f => `
+        <tr class="border-b border-gray-50 cursor-pointer"
+            onclick="verDetalle(${JSON.stringify(f).replace(/"/g, '&quot;')})">
+          <td class="px-4 py-2.5 text-sm font-medium text-gray-800 max-w-xs truncate">${f.razon_social || '—'}</td>
+          <td class="px-4 py-2.5 text-xs text-gray-500 font-mono">${f.nit || '—'}</td>
+          <td class="px-4 py-2.5 text-xs text-gray-600">${f.ciudad || '—'}</td>
+          <td class="px-4 py-2.5 text-xs text-gray-600">${f.departamento || '—'}</td>
+          <td class="px-4 py-2.5 text-xs text-gray-600">${f.telefono || '—'}</td>
+          <td class="px-4 py-2.5">
+            <span class="badge ${f.estado_info === 'Completa' ? 'badge-completa' : 'badge-incompleta'}">
+              ${f.estado_info || '—'}
+            </span>
+          </td>
+          <td class="px-4 py-2.5">
+            <span class="badge ${f.estado_legal === 'Legalmente constituida' ? 'badge-legal' : 'badge-nolegal'} text-xs">
+              ${(f.estado_legal || '—')
+                .replace('No legalmente constituida', 'No constituida')
+                .replace('Legalmente constituida', 'Constituida')}
+            </span>
+          </td>
+        </tr>`).join('');
+    }
+
+    const totalPags = Math.ceil(tablaTotalEncontrados / tablaLimit);
+    document.getElementById('paginacion-info').textContent = `Página ${tablaPagina + 1} de ${Math.max(totalPags, 1)}`;
+    document.getElementById('btn-prev').disabled = tablaPagina === 0;
+    document.getElementById('btn-next').disabled = (tablaPagina + 1) >= totalPags;
+
+  } catch (e) {
+    tbody.innerHTML = `<tr><td colspan="7" class="px-4 py-8 text-center text-red-400">Error: ${e.message}</td></tr>`;
+  }
+}
+
+function aplicarFiltros()  { tablaPagina = 0; cargarTabla(); }
+function limpiarFiltros()  {
+  ['f-departamento','f-ciudad','f-estado-info','f-estado-legal'].forEach(id =>
+    document.getElementById(id).value = '');
+  document.getElementById('f-busqueda').value = '';
+  aplicarFiltros();
+}
+function cambiarPagina(delta) { tablaPagina = Math.max(0, tablaPagina + delta); cargarTabla(); }
+
+
+// ── 5. Modal de detalle de ferretería ─────────────────────────
+
+function verDetalle(f) {
+  const fields = [
+    ['Razón Social',         f.razon_social],
+    ['NIT',                  f.nit],
+    ['Cámara de Comercio',   f.camara_comercio],
+    ['Organización Jurídica',f.organizacion_juridica],
+    ['Estado Matrícula',     f.estado_matricula],
+    ['Fecha Matrícula',      f.fecha_matricula],
+    ['Fecha Renovación',     f.fecha_renovacion],
+    ['Representante Legal',  f.representante_legal],
+    ['Nombre Comercial',     f.nombre_comercial],
+    ['Dirección',            f.direccion],
+    ['Ciudad',               f.ciudad],
+    ['Departamento',         f.departamento],
+    ['Teléfono',             f.telefono],
+    ['Email',                f.email],
+    ['Website',              f.website],
+    ['Estado Info',          f.estado_info],
+    ['Estado Legal',         f.estado_legal],
+    ['Estado Actividad',     f.estado_actividad],
+  ];
+
+  const fullWidth = ['Razón Social', 'Dirección', 'Estado Legal'];
+  const html = `
+    <div id="modal-overlay" onclick="cerrarModal()"
+         class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+      <div onclick="event.stopPropagation()"
+           class="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[80vh] overflow-y-auto">
+        <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white rounded-t-2xl">
+          <h3 class="font-semibold text-gray-800 text-sm">Detalle — ${f.razon_social || 'Ferretería'}</h3>
+          <button onclick="cerrarModal()" class="text-gray-400 hover:text-gray-600">✕</button>
+        </div>
+        <div class="p-6 grid grid-cols-2 gap-3">
+          ${fields.filter(([, v]) => v).map(([k, v]) => `
+            <div class="col-span-${fullWidth.includes(k) ? 2 : 1}">
+              <p class="text-xs text-gray-400 mb-0.5">${k}</p>
+              <p class="text-sm text-gray-800 font-medium">${v}</p>
+            </div>`).join('')}
+        </div>
+      </div>
+    </div>`;
+  document.body.insertAdjacentHTML('beforeend', html);
+}
+
+function cerrarModal() { document.getElementById('modal-overlay')?.remove(); }
+
+
+// ── 6. Chat con el Agente IA ──────────────────────────────────
+
+const N8N_WEBHOOK = 'http://localhost:5678/webhook/orquestador';
+let _msgCounter = 0;
+
+async function enviarMensaje() {
+  const input = document.getElementById('chat-input');
+  const msg   = input.value.trim();
+  if (!msg) return;
+  input.value = '';
+
+  agregarBurbuja(msg, 'user');
+  const thinkingId = agregarBurbuja('<div class="spinner"></div>', 'ai', true);
+
+  try {
+    const r = await fetch(N8N_WEBHOOK, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ pregunta: msg, timestamp: new Date().toISOString() }),
+    });
+
+    const text = await r.text();
+
+    if (!r.ok || !text) {
+      eliminarBurbuja(thinkingId);
+      agregarBurbuja(
+        '⚠️ El workflow no está activo en n8n.<br>' +
+        '<small style="color:#94a3b8">Verifica que el workflow 00 - Orquestador esté publicado.</small>',
+        'ai'
+      );
+      return;
+    }
+
+    let data;
+    try   { data = JSON.parse(text); }
+    catch { data = { respuesta: text }; }
+
+    const respuesta = data.respuesta || data.output || data.text || JSON.stringify(data);
+    eliminarBurbuja(thinkingId);
+    agregarBurbuja(respuesta, 'ai');
+
+  } catch (e) {
+    eliminarBurbuja(thinkingId);
+    agregarBurbuja(`⚠️ No se pudo conectar con n8n: ${e.message}`, 'ai');
+  }
+}
+
+function agregarBurbuja(texto, tipo, isTemp = false) {
+  const id  = 'msg-' + (++_msgCounter);
+  const cls = tipo === 'user' ? 'chat-bubble-user' : 'chat-bubble-ai';
+  const html = `<div id="${id}" class="${cls} max-w-lg px-4 py-3 text-sm text-gray-700 shadow-sm">${texto}</div>`;
+  const container = document.getElementById('chat-messages');
+  container.insertAdjacentHTML('beforeend', html);
+  container.scrollTop = container.scrollHeight;
+  return id;
+}
+
+function eliminarBurbuja(id) { document.getElementById(id)?.remove(); }
+
+
+// ── 7. Control de procesos y recarga de CSV ───────────────────
+
+const N8N_PROCESO = 'http://localhost:5678/webhook/orquestador-proceso';
+
+async function triggerProceso(tipo, prefijo) {
+  const estadoEl = document.getElementById(`${prefijo}-estado`);
+  const logEl    = document.getElementById(`${prefijo}-log`);
+
+  if (estadoEl) {
+    estadoEl.textContent  = 'Iniciando...';
+    estadoEl.className    = 'badge badge-pendiente';
+  }
+  if (logEl) {
+    logEl.classList.remove('hidden');
+    logEl.textContent = `[${new Date().toLocaleTimeString()}] Enviando solicitud a n8n...\n`;
+  }
+
+  try {
+    const r = await fetch(N8N_PROCESO, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ tipo }),
+    });
+
+    if (r.ok) {
+      if (estadoEl) {
+        estadoEl.textContent = 'Ejecutando...';
+        estadoEl.className   = 'badge badge-completa';
+      }
+      if (logEl) logEl.textContent +=
+        `[${new Date().toLocaleTimeString()}] Proceso "${tipo}" iniciado en n8n.\n` +
+        `El workflow corre en segundo plano. Revisa n8n para ver el progreso.\n`;
+    } else {
+      throw new Error(`HTTP ${r.status}`);
+    }
+  } catch (e) {
+    if (estadoEl) {
+      estadoEl.textContent = 'Error';
+      estadoEl.className   = 'badge badge-incompleta';
+    }
+    if (logEl) logEl.textContent +=
+      `[${new Date().toLocaleTimeString()}] ✗ Error: ${e.message}\n` +
+      `Verifica que el workflow 00 - Orquestador esté activo en n8n.\n`;
+  }
+}
+
+async function recargarCSV() {
+  try {
+    const r  = await fetch(`${API}/reload-csv`, { method: 'POST' });
+    const d  = await r.json();
+    const el = document.getElementById('reload-status');
+    if (el) el.textContent = `✓ CSV recargado: ${fmt(d.total_registros)} registros a las ${new Date().toLocaleTimeString('es-CO')}`;
+    await cargarEstadisticas();
+    if (tablaInicializada) cargarTabla();
+  } catch (e) {
+    const el = document.getElementById('reload-status');
+    if (el) el.textContent = `✗ Error: ${e.message}`;
+  }
+}
+
+
+// ── 8. Sin Ubicación ─────────────────────────────────────────
+
+let suInicializado = false;
+let suPagina       = 0;
+const suLimit      = 50;
+let suTotal        = 0;
+
+const debouncedSinUbicacion = debounce(() => { suPagina = 0; cargarSinUbicacion(); }, 400);
+
+async function initSinUbicacion() {
+  suInicializado = true;
+  await cargarSinUbicacion();
+}
+
+async function cargarSinUbicacion() {
+  const busqueda    = document.getElementById('su-busqueda')?.value.trim() || '';
+  const departamento = document.getElementById('su-departamento')?.value.trim() || '';
+  const params = new URLSearchParams({ limit: suLimit, offset: suPagina * suLimit });
+  if (busqueda)     params.set('busqueda', busqueda);
+  if (departamento) params.set('departamento', departamento);
+
+  const tbody = document.getElementById('su-tabla-body');
+  tbody.innerHTML = `<tr><td colspan="6" class="px-4 py-8 text-center"><div class="spinner mx-auto"></div></td></tr>`;
+
+  try {
+    const r = await fetch(`${API}/sin-ubicacion?${params}`);
+    const d = await r.json();
+    suTotal = d.total || 0;
+
+    document.getElementById('su-count').textContent = `${fmt(suTotal)} sin geocodificar`;
+
+    // Badge en sidebar
+    const badge = document.getElementById('badge-sin-ubicacion');
+    if (badge && suTotal > 0) {
+      badge.textContent = suTotal > 999 ? '+999' : suTotal;
+      badge.classList.remove('hidden');
+    }
+
+    if (!d.data || d.data.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="6" class="px-4 py-8 text-center text-gray-400">Sin resultados</td></tr>`;
+    } else {
+      tbody.innerHTML = d.data.map(f => `
+        <tr class="border-b border-gray-50 hover:bg-gray-50">
+          <td class="px-4 py-2.5 text-sm font-medium text-gray-800 max-w-xs truncate">${f.razon_social || '—'}</td>
+          <td class="px-4 py-2.5 text-xs text-gray-600">${f.representante_legal || '—'}</td>
+          <td class="px-4 py-2.5 text-xs text-gray-600 font-mono">${f.telefono || '—'}</td>
+          <td class="px-4 py-2.5 text-xs text-gray-500 max-w-xs truncate">${f.direccion || '—'}</td>
+          <td class="px-4 py-2.5 text-xs text-gray-600">${f.ciudad || '—'}</td>
+          <td class="px-4 py-2.5 text-xs text-gray-500">${f.camara_comercio || '—'}</td>
+        </tr>`).join('');
+    }
+
+    const totalPags = Math.ceil(suTotal / suLimit);
+    document.getElementById('su-paginacion-info').textContent = `Página ${suPagina + 1} de ${Math.max(totalPags, 1)}`;
+    document.getElementById('su-btn-prev').disabled = suPagina === 0;
+    document.getElementById('su-btn-next').disabled = (suPagina + 1) >= totalPags;
+
+  } catch(e) {
+    tbody.innerHTML = `<tr><td colspan="6" class="px-4 py-8 text-center text-red-400">Error: ${e.message}</td></tr>`;
+  }
+}
+
+function limpiarSinUbicacion() {
+  document.getElementById('su-busqueda').value = '';
+  document.getElementById('su-departamento').value = '';
+  suPagina = 0;
+  cargarSinUbicacion();
+}
+
+function cambiarPaginaSU(delta) { suPagina = Math.max(0, suPagina + delta); cargarSinUbicacion(); }
+
+
+// ── 9. Inicialización ─────────────────────────────────────────
+
+cargarEstadisticas();
+setInterval(cargarEstadisticas, 60000); // refresca stats cada minuto
+</script>

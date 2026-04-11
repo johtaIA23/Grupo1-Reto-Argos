@@ -1,0 +1,52 @@
+<!-- ═══════════════════════════════════════════════════════
+     SECCIÓN: AGENTE IA — Chat con el agente de n8n/Groq
+     ═══════════════════════════════════════════════════════ -->
+<div data-section="agente" class="chat-section flex flex-col h-full">
+  <div class="chat-container bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col">
+
+    <!-- Encabezado -->
+    <div class="px-5 py-4 border-b border-gray-100 flex items-center gap-3">
+      <div class="chat-avatar w-8 h-8 rounded-full flex items-center justify-center">
+        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17H3a2 2 0 01-2-2V5a2 2 0 012-2h14a2 2 0 012 2v2M7 13V7"/>
+        </svg>
+      </div>
+      <div>
+        <p class="text-sm font-semibold text-gray-800">Agente Ferreterías</p>
+        <p class="text-xs text-gray-400">Consulta datos del censo en lenguaje natural</p>
+      </div>
+    </div>
+
+    <!-- Área de mensajes -->
+    <div id="chat-messages" class="flex-1 overflow-y-auto p-5 space-y-3 flex flex-col">
+      <div class="chat-bubble-ai max-w-lg px-4 py-3 text-sm text-gray-700 shadow-sm">
+        <p class="font-semibold text-gray-800 mb-1">Hola, soy el Agente de Ferreterías 👋</p>
+        <p>Puedo responder preguntas sobre los datos, como:</p>
+        <ul class="mt-2 space-y-1 text-xs text-gray-600">
+          <li>→ <em>¿Cuántas ferreterías hay en Medellín sin teléfono?</em></li>
+          <li>→ <em>¿Qué porcentaje están legalmente constituidas?</em></li>
+          <li>→ <em>Lista las 10 más recientes de Antioquia</em></li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Campo de entrada -->
+    <div class="px-4 py-4 border-t border-gray-100 bg-gray-50 rounded-b-xl">
+      <div class="flex gap-2">
+        <input id="chat-input" type="text" placeholder="Escribe tu pregunta..."
+          onkeydown="if(event.key==='Enter' && !event.shiftKey){ event.preventDefault(); enviarMensaje(); }"
+          class="flex-1 text-sm border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white" />
+        <button onclick="enviarMensaje()" id="chat-send"
+          class="chat-send-btn px-4 py-2.5 text-white text-sm font-medium rounded-xl flex items-center gap-2 transition-opacity">
+          <span>Enviar</span>
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>

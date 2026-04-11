@@ -1,0 +1,79 @@
+<!-- ═══════════════════════════════════════════════════════
+     SIDEBAR — Navegación principal
+     ═══════════════════════════════════════════════════════ -->
+<aside class="sidebar w-64 min-h-screen flex flex-col">
+
+  <!-- Logo Argos -->
+  <div class="px-6 py-5 sidebar-divider border-b">
+    <div class="flex items-center gap-3">
+      <div class="sidebar-logo-dot w-9 h-9 rounded-lg flex items-center justify-center font-bold text-white text-lg">A</div>
+      <div>
+        <p class="text-white font-semibold text-sm leading-tight">Ferreterías Colombia</p>
+        <p class="text-blue-300 text-xs">Cementos Argos</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Menú de navegación -->
+  <nav class="flex-1 py-4 px-3 space-y-1">
+
+    <button onclick="showSection('resumen')" data-nav="resumen"
+      class="nav-item active w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-white text-sm text-left">
+      <svg class="w-5 h-5 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+      </svg>
+      Graficos
+    </button>
+
+    <button onclick="showSection('datos')" data-nav="datos"
+      class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-white text-sm text-left">
+      <svg class="w-5 h-5 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+      </svg>
+      Datos
+    </button>
+
+    <button onclick="showSection('agente')" data-nav="agente"
+      class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-white text-sm text-left">
+      <svg class="w-5 h-5 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/>
+      </svg>
+      Agente IA
+    </button>
+
+    <button onclick="showSection('procesos')" data-nav="procesos"
+      class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-white text-sm text-left">
+      <svg class="w-5 h-5 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+      </svg>
+      Procesos
+    </button>
+
+    <button onclick="showSection('sin-ubicacion')" data-nav="sin-ubicacion"
+      class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-white text-sm text-left">
+      <svg class="w-5 h-5 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+      </svg>
+      Sin Ubicación
+      <span id="badge-sin-ubicacion" class="ml-auto bg-orange-500 text-white text-xs rounded-full px-1.5 py-0.5 hidden"></span>
+    </button>
+
+  </nav>
+
+  <!-- Indicador de estado de la API -->
+  <div class="px-4 py-4 sidebar-divider border-t">
+    <div class="flex items-center gap-2">
+      <div class="pulse-dot" id="status-dot"></div>
+      <span class="text-xs text-blue-300" id="status-text">Conectando...</span>
+    </div>
+    <p class="text-xs text-white/40 mt-1" id="status-records"></p>
+  </div>
+
+</aside>

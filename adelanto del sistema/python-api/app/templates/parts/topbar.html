@@ -1,0 +1,25 @@
+<!-- ═══════════════════════════════════════════════════════
+     TOPBAR — Barra superior con título y botón de recarga
+     ═══════════════════════════════════════════════════════ -->
+<header class="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between shadow-sm">
+
+  <!-- Título dinámico (cambia según la sección activa) -->
+  <div>
+    <h1 class="text-base font-semibold text-gray-800" id="page-title">Graficos General</h1>
+    <p class="text-xs text-gray-400" id="page-sub">Visión general del censo de ferreterías</p>
+  </div>
+
+  <!-- Acciones -->
+  <div class="flex items-center gap-3">
+    <button onclick="recargarCSV()"
+      class="text-xs px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 flex items-center gap-1.5">
+      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+      </svg>
+      Recargar
+    </button>
+    <span class="text-xs text-gray-400" id="last-update"></span>
+  </div>
+
+</header>

@@ -1,0 +1,270 @@
+{
+  "name": "00 - Orquestador Principal",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "orquestador",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "a0b0c0d0-0000-0001-0001-000000000001",
+      "name": "Webhook Chat",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 160],
+      "webhookId": "orquestador-chat-wh"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "ID_SUB_AGENTE_IA",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "id": "a0b0c0d0-0000-0001-0001-000000000002",
+      "name": "Ejecutar: Agente IA",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1,
+      "position": [220, 160]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ respuesta: $json.output || $json.respuesta || 'Sin respuesta del agente.' }) }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              { "name": "Content-Type", "value": "application/json" },
+              { "name": "Access-Control-Allow-Origin", "value": "*" }
+            ]
+          }
+        }
+      },
+      "id": "a0b0c0d0-0000-0001-0001-000000000003",
+      "name": "Responder al Dashboard",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [440, 160]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "orquestador-proceso",
+        "responseMode": "onReceived",
+        "responseData": "={{ JSON.stringify({ ok: true, mensaje: 'Proceso iniciado: ' + $json.body.tipo }) }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              { "name": "Content-Type", "value": "application/json" },
+              { "name": "Access-Control-Allow-Origin", "value": "*" }
+            ]
+          }
+        } 
+      },
+      "id": "a0b0c0d0-0000-0001-0001-000000000012",
+      "name": "Webhook Procesos",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 460],
+      "webhookId": "orquestador-proceso-wh"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": { "caseSensitive": false, "leftValue": "", "typeValidation": "strict" },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.body.tipo }}",
+                    "rightValue": "carga_csv",
+                    "operator": { "type": "string", "operation": "equals" }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "carga_csv"
+            },
+            {
+              "conditions": {
+                "options": { "caseSensitive": false, "leftValue": "", "typeValidation": "strict" },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.body.tipo }}",
+                    "rightValue": "enriquecer_maps",
+                    "operator": { "type": "string", "operation": "equals" }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "enriquecer_maps"
+            },
+            {
+              "conditions": {
+                "options": { "caseSensitive": false, "leftValue": "", "typeValidation": "strict" },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.body.tipo }}",
+                    "rightValue": "exportar_sheets",
+                    "operator": { "type": "string", "operation": "equals" }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "exportar_sheets"
+            },
+            {
+              "conditions": {
+                "options": { "caseSensitive": false, "leftValue": "", "typeValidation": "strict" },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.body.tipo }}",
+                    "rightValue": "proceso_completo",
+                    "operator": { "type": "string", "operation": "equals" }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "proceso_completo"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a0b0c0d0-0000-0001-0001-000000000005",
+      "name": "Ruta por Tipo de Proceso",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [260, 460]
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "ID_SUB_CARGA_CSV",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "id": "a0b0c0d0-0000-0001-0001-000000000006",
+      "name": "Ejecutar: Carga CSV",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1,
+      "position": [500, 320]
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "ID_SUB_ENRIQUECIMIENTO",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "id": "a0b0c0d0-0000-0001-0001-000000000007",
+      "name": "Ejecutar: Enriquecimiento Maps",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1,
+      "position": [500, 460]
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "ID_SUB_EXPORTAR_SHEETS",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "id": "a0b0c0d0-0000-0001-0001-000000000008",
+      "name": "Ejecutar: Exportar Sheets",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1,
+      "position": [500, 600]
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "ID_SUB_CARGA_CSV",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "id": "a0b0c0d0-0000-0001-0001-000000000009",
+      "name": "Completo 1: Carga CSV",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1,
+      "position": [500, 760]
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "ID_SUB_ENRIQUECIMIENTO",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "id": "a0b0c0d0-0000-0001-0001-000000000010",
+      "name": "Completo 2: Enriquecimiento Maps",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1,
+      "position": [740, 760]
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "ID_SUB_EXPORTAR_SHEETS",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "id": "a0b0c0d0-0000-0001-0001-000000000011",
+      "name": "Completo 3: Exportar Sheets",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1,
+      "position": [980, 760]
+    }
+  ],
+  "connections": {
+    "Webhook Chat": {
+      "main": [[{ "node": "Ejecutar: Agente IA", "type": "main", "index": 0 }]]
+    },
+    "Ejecutar: Agente IA": {
+      "main": [[{ "node": "Responder al Dashboard", "type": "main", "index": 0 }]]
+    },
+    "Webhook Procesos": {
+      "main": [[{ "node": "Ruta por Tipo de Proceso", "type": "main", "index": 0 }]]
+    },
+    "Ruta por Tipo de Proceso": {
+      "main": [
+        [{ "node": "Ejecutar: Carga CSV",             "type": "main", "index": 0 }],
+        [{ "node": "Ejecutar: Enriquecimiento Maps",   "type": "main", "index": 0 }],
+        [{ "node": "Ejecutar: Exportar Sheets",        "type": "main", "index": 0 }],
+        [{ "node": "Completo 1: Carga CSV",            "type": "main", "index": 0 }]
+      ]
+    },
+    "Completo 1: Carga CSV": {
+      "main": [[{ "node": "Completo 2: Enriquecimiento Maps", "type": "main", "index": 0 }]]
+    },
+    "Completo 2: Enriquecimiento Maps": {
+      "main": [[{ "node": "Completo 3: Exportar Sheets", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveExecutionProgress": true
+  },
+  "versionId": "00-orquestador-v2"
+}

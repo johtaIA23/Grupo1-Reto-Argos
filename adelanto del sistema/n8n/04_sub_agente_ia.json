@@ -1,0 +1,131 @@
+{
+  "name": "04 - Sub: Agente IA Chat",
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "id": "a4b4c4d4-0004-0001-0001-000000000001",
+      "name": "Cuando lo llama el Orquestador",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1,
+      "position": [0, 300]
+    },
+    { 
+      "parameters": {
+        "agent": "toolsAgent",
+        "promptType": "define",
+        "text": "={{ $json.body.pregunta }}",
+        "options": {
+          "systemMessage": "Eres un asistente de datos exclusivamente para el censo de ferreterías de Colombia de Cementos Argos. Tu único propósito es responder preguntas sobre los datos de este censo.\n\nTEMAS QUE PUEDES RESPONDER:\n- Estadísticas del censo: totales, porcentajes, distribuciones por departamento o cámara de comercio\n- Consultas de ferreterías: buscar por nombre, ciudad, departamento, estado de información o estado legal\n- Información sobre los datos del CSV cargado (48.000+ registros de cámaras de comercio)\n\nTEMAS PROHIBIDOS — si el usuario pregunta sobre esto, rechaza amablemente:\n- Preguntas generales (historia, cultura, recetas, noticias, ciencia, etc.)\n- Temas que no sean sobre el censo de ferreterías de Argos\n- Código, programación, o temas técnicos ajenos al proyecto\n\nCUANDO TE PREGUNTEN ALGO FUERA DEL ALCANCE responde exactamente:\n\"Solo puedo responder preguntas sobre el censo de ferreterías de Colombia. ¿En qué te puedo ayudar con los datos del censo?\"\n\nREGLAS DE RESPUESTA:\n- Responde siempre en español, de forma clara y estructurada\n- Usa formato numérico colombiano: puntos para miles (ej: 48.237)\n- Cuando listes ferreterías, muestra máximo 10 resultados y menciona el total encontrado\n- Para preguntas generales del censo, usa primero obtener_estadisticas\n- Sé concreto: da la respuesta más útil posible con los datos disponibles"
+        }
+      },
+      "id": "a4b4c4d4-0004-0001-0001-000000000002",
+      "name": "Agente IA",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [340, 300]
+    },
+    {
+      "parameters": {
+        "model": "llama-3.3-70b-versatile",
+        "options": {
+          "temperature": 0.2
+        }
+      },
+      "id": "a4b4c4d4-0004-0001-0001-000000000003",
+      "name": "Groq Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [160, 500],
+      "credentials": {
+        "groqApi": {
+          "id": "AQUI_VA_ID_CREDENCIAL_GROQ",
+          "name": "Groq - Ferreterías"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "name": "obtener_estadisticas",
+        "description": "Obtiene estadísticas generales del censo: total registros, distribución por estado_info (Completa/Incompleta), distribución por estado_legal, top 20 departamentos, top 20 cámaras de comercio, cantidad con teléfono/email/NIT. Usar para preguntas de totales, porcentajes, rankings o distribuciones generales.",
+        "method": "GET",
+        "url": "http://python-api:8000/estadisticas",
+        "options": {}
+      },
+      "id": "a4b4c4d4-0004-0001-0001-000000000004",
+      "name": "Tool: Estadísticas",
+      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+      "typeVersion": 1.1,
+      "position": [520, 500]
+    },
+    {
+      "parameters": {
+        "name": "consultar_ferreterias",
+        "description": "Consulta y filtra ferreterías del censo. Devuelve lista con razón social, NIT, ciudad, departamento, teléfono, email, estado_info y estado_legal. Usar cuando el usuario quiera ver ferreterías específicas, buscar por nombre, o filtrar por ubicación o estado. Parámetros disponibles: ciudad (ej: Medellín), departamento (ej: Antioquia), estado_info (exacto: Completa o Incompleta), estado_legal (exacto: Legalmente constituida o No legalmente constituida), busqueda (texto libre en nombre/razón social), limit (cuántos resultados, máximo 100).",
+        "method": "POST",
+        "url": "http://python-api:8000/consultar",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ ciudad: $fromAI('ciudad', 'Ciudad para filtrar. Ej: Medellín, Bogotá. Vacío si no aplica.', 'string'), departamento: $fromAI('departamento', 'Departamento para filtrar. Ej: Antioquia, Cundinamarca. Vacío si no aplica.', 'string'), estado_info: $fromAI('estado_info', 'Filtrar por completitud: Completa o Incompleta. Vacío si no aplica.', 'string'), estado_legal: $fromAI('estado_legal', 'Filtrar por estado legal. Vacío si no aplica.', 'string'), busqueda: $fromAI('busqueda', 'Texto libre para buscar en nombre o razón social. Vacío si no aplica.', 'string'), limit: $fromAI('limit', 'Cuántos resultados retornar. Usar 10 para respuestas conversacionales, 50-100 para análisis.', 'number') }) }}",
+        "options": {}
+      },
+      "id": "a4b4c4d4-0004-0001-0001-000000000005",
+      "name": "Tool: Consultar Ferreterías",
+      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+      "typeVersion": 1.1,
+      "position": [700, 500]
+    }
+  ],
+  "connections": {
+    "Cuando lo llama el Orquestador": {
+      "main": [
+        [
+          {
+            "node": "Agente IA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Agente IA",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tool: Estadísticas": {
+      "ai_tool": [
+        [
+          {
+            "node": "Agente IA",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tool: Consultar Ferreterías": {
+      "ai_tool": [
+        [
+          {
+            "node": "Agente IA",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "04-sub-agente-ia-v1"
+}

@@ -1,0 +1,107 @@
+{
+  "name": "05 - Sub: Carga CSV Inicial",
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "id": "a5b5c5d5-0005-0001-0001-000000000001",
+      "name": "Cuando lo llama el Orquestador",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1,
+      "position": [0, 300]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const SUPABASE_URL = $env.SUPABASE_URL;\nconst SUPABASE_KEY = $env.SUPABASE_SERVICE_KEY;\nif (!SUPABASE_URL || !SUPABASE_KEY) throw new Error('Faltan variables de entorno: SUPABASE_URL y/o SUPABASE_SERVICE_KEY');\nconst staticData = $getWorkflowStaticData('global');\nstaticData.totalNuevos = 0;\nstaticData.totalDuplicados = 0;\nstaticData.cicloId = null;\nlet numeroCiclo = 1;\ntry {\n  const ultimoCiclo = await this.helpers.httpRequest({ method: 'GET', url: `${SUPABASE_URL}/rest/v1/ciclos_actualizacion?select=numero_ciclo&order=numero_ciclo.desc&limit=1`, headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } });\n  if (Array.isArray(ultimoCiclo) && ultimoCiclo.length > 0) numeroCiclo = (ultimoCiclo[0].numero_ciclo || 0) + 1;\n} catch (e) {}\nconst cicloResp = await this.helpers.httpRequest({ method: 'POST', url: `${SUPABASE_URL}/rest/v1/ciclos_actualizacion`, headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' }, body: JSON.stringify({ numero_ciclo: numeroCiclo, fecha_inicio: new Date().toISOString(), estado: 'en_proceso' }) });\nconst cicloId = Array.isArray(cicloResp) ? cicloResp[0].id : cicloResp.id;\nstaticData.cicloId = cicloId;\nstaticData.numeroCiclo = numeroCiclo;\nreturn [{ json: { ciclo_id: cicloId, numero_ciclo: numeroCiclo, mensaje: `Ciclo ${numeroCiclo} iniciado` } }];"
+      },
+      "id": "a5b5c5d5-0005-0001-0001-000000000002",
+      "name": "Iniciar Ciclo",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [220, 300]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const fs = require('fs');\nfunction parseLine(line) {\n  const result = []; let current = ''; let inQuotes = false;\n  for (let i = 0; i < line.length; i++) {\n    const ch = line[i];\n    if (ch === '\"') { if (inQuotes && line[i+1] === '\"') { current += '\"'; i++; } else inQuotes = !inQuotes; }\n    else if (ch === ',' && !inQuotes) { result.push(current); current = ''; }\n    else current += ch;\n  }\n  result.push(current); return result;\n}\nconst content = fs.readFileSync('/data/ferreterias.csv', 'utf8');\nconst lines = content.replace(/\\r\\n/g, '\\n').replace(/\\r/g, '\\n').split('\\n');\nconst headers = parseLine(lines[0]).map(h => h.trim().replace(/^\\uFEFF/, ''));\nconst result = [];\nfor (let i = 1; i < lines.length; i++) {\n  const line = lines[i];\n  if (!line.trim()) continue;\n  const values = parseLine(line);\n  const obj = {};\n  headers.forEach((h, idx) => { obj[h] = values[idx] !== undefined ? values[idx].trim() : null; });\n  result.push({ json: obj });\n}\nreturn result;"
+      },
+      "id": "a5b5c5d5-0005-0001-0001-000000000003",
+      "name": "Leer y Parsear CSV",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [440, 300]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const items = $input.all();\nfunction limpiar(str) {\n  if (str === null || str === undefined || str === '' || str === 'null' || str === 'NULL') return null;\n  return str.toString().trim().replace(/\\s+/g, ' ') || null;\n}\nfunction parsearFecha(dateStr) {\n  if (!dateStr) return null;\n  const str = dateStr.toString().trim();\n  if (!str || str === 'null' || str === 'NULL' || str === '0000-00-00') return null;\n  const ddmmyyyy = str.match(/^(\\d{1,2})[/-](\\d{1,2})[/-](\\d{4})$/);\n  if (ddmmyyyy) { const [, d, m, y] = ddmmyyyy; return `${y}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`; }\n  if (str.match(/^\\d{4}-\\d{2}-\\d{2}$/)) return str;\n  return null;\n}\nconst resultado = items.filter(item => {\n  const rs = item.json.razon_social || item.json.RAZON_SOCIAL || '';\n  return rs.toString().trim().length > 0;\n}).map(item => {\n  const row = item.json;\n  let repLegal = limpiar(row.representante_legal);\n  if (!repLegal) { const n = limpiar(row.primer_nombre)||''; const a = limpiar(row.primer_apellido)||''; repLegal = `${n} ${a}`.trim()||null; }\n  const razonSocial = limpiar(row.razon_social);\n  const nit = limpiar(row.nit)||limpiar(row.numero_identificacion);\n  const telefono = limpiar(row.telefono);\n  const direccion = limpiar(row.direccion);\n  const estadoMatricula = limpiar(row.estado_matricula)||'ACTIVA';\n  const estadoInfo = (razonSocial && direccion && telefono) ? 'Completa' : 'Incompleta';\n  const estadoLegal = (nit || estadoMatricula === 'ACTIVA') ? 'Legalmente constituida' : 'No legalmente constituida';\n  return { json: {\n    camara_comercio: limpiar(row.camara_comercio),\n    razon_social: razonSocial,\n    nit,\n    organizacion_juridica: limpiar(row.organizacion_juridica),\n    estado_matricula: estadoMatricula,\n    fecha_matricula: parsearFecha(row.fecha_matricula),\n    fecha_renovacion: parsearFecha(row.fecha_renovacion),\n    representante_legal: repLegal,\n    nombre_comercial: limpiar(row.nombre_comercial),\n    direccion,\n    ciudad: limpiar(row.ciudad)||limpiar(row.municipio),\n    departamento: limpiar(row.departamento),\n    telefono,\n    email: limpiar(row.email),\n    website: limpiar(row.website)||limpiar(row.sitio_web),\n    estado_info: estadoInfo,\n    estado_legal: estadoLegal,\n    estado_actividad: 'Pendiente',\n    fuente: 'camara_comercio',\n    ciclo_actualizacion: $getWorkflowStaticData('global').numeroCiclo||1\n  }};\n});\nreturn resultado;"
+      },
+      "id": "a5b5c5d5-0005-0001-0001-000000000004",
+      "name": "Limpiar, Mapear y Clasificar",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [660, 300]
+    },
+    {
+      "parameters": {
+        "batchSize": 100,
+        "options": {}
+      },
+      "id": "a5b5c5d5-0005-0001-0001-000000000005",
+      "name": "División en Lotes",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [880, 300]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const items = $input.all();\nconst staticData = $getWorkflowStaticData('global');\nconst SUPABASE_URL = $env.SUPABASE_URL;\nconst SUPABASE_KEY = $env.SUPABASE_SERVICE_KEY;\nif (!SUPABASE_URL || !SUPABASE_KEY) throw new Error('Faltan variables de entorno');\nconst numeroCiclo = staticData.numeroCiclo||1;\nconst registros = items.map(item => {\n  const f = item.json;\n  return { camara_comercio: f.camara_comercio||null, razon_social: f.razon_social, nit: f.nit||null, organizacion_juridica: f.organizacion_juridica||null, estado_matricula: f.estado_matricula||'ACTIVA', fecha_matricula: f.fecha_matricula||null, fecha_renovacion: f.fecha_renovacion||null, representante_legal: f.representante_legal||null, nombre_comercial: f.nombre_comercial||null, direccion: f.direccion||null, ciudad: f.ciudad||null, departamento: f.departamento||null, telefono: f.telefono||null, email: f.email||null, website: f.website||null, estado_info: f.estado_info, estado_legal: f.estado_legal, estado_actividad: f.estado_actividad, fuente: f.fuente||'camara_comercio', ciclo_actualizacion: numeroCiclo };\n});\nlet batchNuevos=0, batchDuplicados=0;\ntry {\n  const resp = await this.helpers.httpRequest({ method: 'POST', url: `${SUPABASE_URL}/rest/v1/ferreterias`, headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'resolution=ignore-duplicates,return=representation' }, body: JSON.stringify(registros) });\n  batchNuevos = Array.isArray(resp) ? resp.length : 0;\n  batchDuplicados = registros.length - batchNuevos;\n} catch(err) { console.error(`Error upsert: ${err.message}`); }\nstaticData.totalNuevos = (staticData.totalNuevos||0) + batchNuevos;\nstaticData.totalDuplicados = (staticData.totalDuplicados||0) + batchDuplicados;\nif (staticData.cicloId) {\n  try { await this.helpers.httpRequest({ method: 'POST', url: `${SUPABASE_URL}/rest/v1/rpc/actualizar_ciclo`, headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ p_ciclo_id: staticData.cicloId, p_nuevos: batchNuevos, p_duplicados: batchDuplicados }) }); } catch(e) {}\n}\nreturn [{ json: { batch_nuevos: batchNuevos, batch_duplicados: batchDuplicados, total_acumulado_nuevos: staticData.totalNuevos, total_acumulado_duplicados: staticData.totalDuplicados } }];"
+      },
+      "id": "a5b5c5d5-0005-0001-0001-000000000006",
+      "name": "Deduplicar e Insertar",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1100, 140]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const staticData = $getWorkflowStaticData('global');\nconst SUPABASE_URL = $env.SUPABASE_URL;\nconst SUPABASE_KEY = $env.SUPABASE_SERVICE_KEY;\nconst cicloId = staticData.cicloId;\nif (cicloId) {\n  await this.helpers.httpRequest({ method: 'POST', url: `${SUPABASE_URL}/rest/v1/rpc/finalizar_ciclo`, headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ p_ciclo_id: cicloId }) });\n}\nconst resumen = { ciclo_id: cicloId, numero_ciclo: staticData.numeroCiclo, total_nuevos: staticData.totalNuevos||0, total_duplicados: staticData.totalDuplicados||0, total_procesados: (staticData.totalNuevos||0)+(staticData.totalDuplicados||0), estado: 'completado', fecha_fin: new Date().toISOString() };\nconsole.log('=== CARGA CSV COMPLETADA ===', JSON.stringify(resumen, null, 2));\nreturn [{ json: resumen }];"
+      },
+      "id": "a5b5c5d5-0005-0001-0001-000000000007",
+      "name": "Finalizar Ciclo",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1100, 460]
+    }
+  ],
+  "connections": {
+    "Cuando lo llama el Orquestador": {
+      "main": [[{ "node": "Iniciar Ciclo", "type": "main", "index": 0 }]]
+    },
+    "Iniciar Ciclo": {
+      "main": [[{ "node": "Leer y Parsear CSV", "type": "main", "index": 0 }]]
+    },
+    "Leer y Parsear CSV": {
+      "main": [[{ "node": "Limpiar, Mapear y Clasificar", "type": "main", "index": 0 }]]
+    },
+    "Limpiar, Mapear y Clasificar": {
+      "main": [[{ "node": "División en Lotes", "type": "main", "index": 0 }]]
+    },
+    "División en Lotes": {
+      "main": [
+        [{ "node": "Finalizar Ciclo", "type": "main", "index": 0 }],
+        [{ "node": "Deduplicar e Insertar", "type": "main", "index": 0 }]
+      ]
+    },
+    "Deduplicar e Insertar": {
+      "main": [[{ "node": "División en Lotes", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "versionId": "05-sub-carga-csv-v1"
+}
