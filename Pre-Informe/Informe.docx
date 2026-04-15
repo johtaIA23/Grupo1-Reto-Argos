@@ -1,4 +1,35 @@
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Jorge
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Identificación de las empresas foco
+
+1.	Segmentación acorde con la Clasificación Industrial Internacional Uniforme (CIIU)
+Clasificación CIIU	                                        Descripción
+    4663	                Comercio al por mayor de materiales de construcción, artículos de ferretería, pinturas, productos de vidrio, equipo y materiales de fontanería y calefacción
+    4752	                Comercio al por menor de materiales de construcción, artículos de ferretería, pinturas, productos de vidrio, equipo y materiales de fontanería y calefacción
+
+2. Búsqueda de empresas: fuentes
+
+| Fuente | Ventajas | Desventajas |
+|--------|----------|-------------|
+| Registro Único Empresarial y Social (RUES) | • Base oficial y consolidada de empresas en Colombia.<br>• Permite consultar por nombre o palabras clave.<br>• Incluye información básica como razón social, estado de matrícula y ubicación. | • Información limitada en detalle comercial (no especifica productos como cemento).<br>• No permite consulta por actividad económica (CIIU).<br>• No permite segmentación avanzada sin procesamiento adicional. |
+| Cámaras de Comercio | • Información confiable y actualizada a nivel regional.<br>• Acceso a datos más detallados de empresas activas.<br>• Posibilidad de validar existencia y ubicación. | • Consulta fragmentada por ciudad o región.<br>• En muchos casos requiere pago para acceso a información completa.<br>• Proceso manual si se buscan múltiples regiones. |
+| DIAN | • Información oficial sobre actividad económica declarada.<br>• Permite validar formalidad de la empresa. | • Acceso limitado y no masivo.<br>• No está diseñada como herramienta de búsqueda de mercado.<br>• Requiere conocer previamente la empresa. |
+| Directorios empresariales (ej. páginas amarillas, portales web) | • Permiten búsquedas por palabra clave (ej. “venta de cemento”).<br>• Útiles para identificar empresas comerciales activas en el mercado. | • Información no estandarizada.<br>• Puede incluir empresas informales o duplicadas.<br>• Requiere validación posterior. |
+| Google Maps / búsquedas web | • Identificación rápida de puntos de venta y ferreterías.<br>• Útil para validar presencia física y ubicación. | • No estructurado para análisis masivo.<br>• Puede incluir negocios no registrados formalmente.<br>• Requiere depuración manual. |
+| La República Empresas | • Presenta rankings y listados de empresas relevantes en Colombia.<br>• Incluye información financiera y sectorial útil para priorización.<br>• Fuente confiable para identificar actores grandes del mercado. | • Enfocado principalmente en empresas medianas y grandes.<br>• No cubre de manera exhaustiva pequeños distribuidores o ferreterías.<br>• No permite filtrado específico por productos como cemento. |
+| Portafolio Empresas / eInforma | • Información empresarial y análisis sectorial actualizado.<br>• Útil para identificar tendencias del sector construcción y materiales.<br>• Permite contextualizar el mercado.<br>• eInforma permite personalizar búsquedas e informes (con costo).<br>• Alta estructuración de la información como complemento al RUES. | • Información dispersa en artículos (Portafolio).<br>• eInforma requiere pago para información detallada.<br>• Requiere interpretación y consolidación manual.<br>• No especifica productos como cemento.<br>• Sesgo hacia empresas formales medianas y grandes. |
+| Datos Colombia | • Plataforma con acceso a datos empresariales y financieros.<br>• Permite segmentaciones más avanzadas según variables económicas.<br>• Útil para análisis cuantitativo del mercado.<br>• Fuente: CONFECÁMARAS. | • Puede requerir suscripción o acceso pago.<br>• Curva de aprendizaje para uso eficiente.<br>• No siempre especifica el detalle de productos comercializados. |
+
+3. Selección de las fuentes de información en las que trabajaremos
+
+4. Depuración y segmentación de la información/empresas
+- Elección de registros
+- Criterios de inclusión (actividad económica proncipal y secundarias, palabras clave ("cemento", "materiales", "contrucción", "depósito", "ferretería"), presencia digital en canales digitales, ubicación identificable
+- Criterios de exclusión: (dedicadas exclsuivamente a vidrio, maderas, carpintería, pinturas, acabados sin relación a materiales estructurakes)
+- Proceso Depuración: consolidación, limpieza datos, Filtros, validación digital, clasificación empresas, resultado esperable.
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 Jerónimo
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 Flujo de la Solución
