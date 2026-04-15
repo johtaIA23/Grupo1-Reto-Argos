@@ -66,7 +66,7 @@ Estructura del Dataset (muestra):
                                     estado_actividad	                            texto	                        Pendiente
                                     geocodificado	                                booleano	                    true / false
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-Johnatan
+Johnnatan
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 Para la creación del repositorio en GitHub, se tuvo una pequeña brecha en cuanto a manejo e instalación debido a que ya se tenía un conocimiento previo y básico, en la instalación de git no se tuvo inconvenientes, 
@@ -77,5 +77,15 @@ dicho impase y ver reflejado los resultados en el tablero.
 
 El equipo es compacto y cada uno aporta de una manera muy acertada desde su área de conocimiento, teniendo en cuenta todas las aristas que implica el proyecto, debido a eso se desarrolla con un buen tiempo la automatización requerida.
 
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Paulina
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+Dentro del proceso de creación del dashboard, se exploraron en primer lugar diversas herramientas sobre las cuales trabajar, entre ellas, Google Data Studio y Streamlit. Sin embargo, 
+se determinó que Power BI sería la plataforma elegida en la que desplegaríamos la visualización de datos en el ejercicio. Esto, debido en parte a que la empresa de nuestro reto (Argos) utiliza internamente esta herramienta también. 
+Se trabajó sobre una base de datos preliminar de prueba, con la cual se planteó un esquema de mapa inicial, tomando como dato la ubicación de las cámaras de comercio alrededor del país.
+
+En segundo lugar, se comenzó a idear y plantear una propuesta de posibles comparaciones y distribución de los datos en el dashboard, que podrían aportar valor al análisis. Entre estos, 
+se encuentra un filtro manual que permita seleccionar las zonas en las que se encuentran distribuidos los negocios, para que, de esta manera, todos los demás esquemas se vean condicionados por esta selección; por ejemplo, el número de negocios, 
+cuántos de ellos se encuentran activos, la distribución por actividad (CIIU), entre otros.
 
