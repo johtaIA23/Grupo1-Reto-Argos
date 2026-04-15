@@ -66,5 +66,16 @@ Estructura del Dataset (muestra):
                                     estado_actividad	                            texto	                        Pendiente
                                     geocodificado	                                booleano	                    true / false
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
+Johnatan
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Para la creación del repositorio en GitHub, se tuvo una pequeña brecha en cuanto a manejo e instalación debido a que ya se tenía un conocimiento previo y básico, en la instalación de git no se tuvo inconvenientes, 
+en la creación del repositorio se procedió a crear carpetas y archivos correspondientes al proyecto establecido, se procedió a invitar al repositorio a los integrantes del equipo, y se procedió a indicar el manejo básico de uso del repositorio.
+
+Luego de determinar el uso de power bi se procedió a iniciar con la construcción de un tablero alternativo con campos calculados y una posible visualización basada en filtros, en este se tuvo un poco de dificultad en las medidas, pero se logró sortear 
+dicho impase y ver reflejado los resultados en el tablero.
+
+El equipo es compacto y cada uno aporta de una manera muy acertada desde su área de conocimiento, teniendo en cuenta todas las aristas que implica el proyecto, debido a eso se desarrolla con un buen tiempo la automatización requerida.
+
+
+
