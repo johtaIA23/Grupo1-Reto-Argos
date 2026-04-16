@@ -1,1 +1,122 @@
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Jorge
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Identificación de las empresas foco
+
+1.	Segmentación acorde con la Clasificación Industrial Internacional Uniforme (CIIU)
+Clasificación CIIU	                                        Descripción
+    4663	                Comercio al por mayor de materiales de construcción, artículos de ferretería, pinturas, productos de vidrio, equipo y materiales de fontanería y calefacción
+    4752	                Comercio al por menor de materiales de construcción, artículos de ferretería, pinturas, productos de vidrio, equipo y materiales de fontanería y calefacción
+
+2. Búsqueda de empresas: fuentes
+
+| Fuente | Ventajas | Desventajas |
+|--------|----------|-------------|
+| Registro Único Empresarial y Social (RUES) | • Base oficial y consolidada de empresas en Colombia.<br>• Permite consultar por nombre o palabras clave.<br>• Incluye información básica como razón social, estado de matrícula y ubicación. | • Información limitada en detalle comercial (no especifica productos como cemento).<br>• No permite consulta por actividad económica (CIIU).<br>• No permite segmentación avanzada sin procesamiento adicional. |
+| Cámaras de Comercio | • Información confiable y actualizada a nivel regional.<br>• Acceso a datos más detallados de empresas activas.<br>• Posibilidad de validar existencia y ubicación. | • Consulta fragmentada por ciudad o región.<br>• En muchos casos requiere pago para acceso a información completa.<br>• Proceso manual si se buscan múltiples regiones. |
+| DIAN | • Información oficial sobre actividad económica declarada.<br>• Permite validar formalidad de la empresa. | • Acceso limitado y no masivo.<br>• No está diseñada como herramienta de búsqueda de mercado.<br>• Requiere conocer previamente la empresa. |
+| Directorios empresariales (ej. páginas amarillas, portales web) | • Permiten búsquedas por palabra clave (ej. “venta de cemento”).<br>• Útiles para identificar empresas comerciales activas en el mercado. | • Información no estandarizada.<br>• Puede incluir empresas informales o duplicadas.<br>• Requiere validación posterior. |
+| Google Maps / búsquedas web | • Identificación rápida de puntos de venta y ferreterías.<br>• Útil para validar presencia física y ubicación. | • No estructurado para análisis masivo.<br>• Puede incluir negocios no registrados formalmente.<br>• Requiere depuración manual. |
+| La República Empresas | • Presenta rankings y listados de empresas relevantes en Colombia.<br>• Incluye información financiera y sectorial útil para priorización.<br>• Fuente confiable para identificar actores grandes del mercado. | • Enfocado principalmente en empresas medianas y grandes.<br>• No cubre de manera exhaustiva pequeños distribuidores o ferreterías.<br>• No permite filtrado específico por productos como cemento. |
+| Portafolio Empresas / eInforma | • Información empresarial y análisis sectorial actualizado.<br>• Útil para identificar tendencias del sector construcción y materiales.<br>• Permite contextualizar el mercado.<br>• eInforma permite personalizar búsquedas e informes (con costo).<br>• Alta estructuración de la información como complemento al RUES. | • Información dispersa en artículos (Portafolio).<br>• eInforma requiere pago para información detallada.<br>• Requiere interpretación y consolidación manual.<br>• No especifica productos como cemento.<br>• Sesgo hacia empresas formales medianas y grandes. |
+| Datos Colombia | • Plataforma con acceso a datos empresariales y financieros.<br>• Permite segmentaciones más avanzadas según variables económicas.<br>• Útil para análisis cuantitativo del mercado.<br>• Fuente: CONFECÁMARAS. | • Puede requerir suscripción o acceso pago.<br>• Curva de aprendizaje para uso eficiente.<br>• No siempre especifica el detalle de productos comercializados. |
+
+3. Selección de las fuentes de información en las que trabajaremos
+
+4. Depuración y segmentación de la información/empresas
+- Elección de registros
+- Criterios de inclusión (actividad económica proncipal y secundarias, palabras clave ("cemento", "materiales", "contrucción", "depósito", "ferretería"), presencia digital en canales digitales, ubicación identificable
+- Criterios de exclusión: (dedicadas exclsuivamente a vidrio, maderas, carpintería, pinturas, acabados sin relación a materiales estructurakes)
+- Proceso Depuración: consolidación, limpieza datos, Filtros, validación digital, clasificación empresas, resultado esperable.
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Jerónimo
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Flujo de la Solución
+Objetivo: Construir un sistema automatizado que levante, enriquezca y visualice el censo digital de ferreterías en Colombia para Cementos Argos, permitiendo identificar clientes potenciales para el canal de distribución de cemento.
+
+Fases del proceso: 1. RECOLECCIÓN     → CSV de Cámaras de Comercio (48.237 registros)
+                   2. ALMACENAMIENTO  → Supabase (PostgreSQL en la nube)
+                   3. ENRIQUECIMIENTO → Google Maps (coordenadas, ciudad, departamento)
+                                     + Groq IA (extracción inteligente de ubicación)
+                                     + Groq IA (detección y limpieza de duplicados)
+                   4. EXPORTACIÓN     → Google Sheets (datos listos para análisis comercial)
+                   5. VISUALIZACIÓN   → Dashboard web con estadísticas, filtros y agente IA.
+
+Tecnologías y Herramientas Utilizadas:        Herramienta	                            Rol	                                          Costo
+                                      n8n (self-hosted, Docker)	            Orquestador de workflows	                              Gratis
+                                      Supabase	                            Base de datos PostgreSQL en la nube	                    Gratis (tier free)
+                                      FastAPI + Python	                    API de consulta y dashboard web	                        Gratis
+                                      Docker Desktop	                      Contenedores locales	                                  Gratis
+                                      Google Maps Places API	              Geocodificación (coordenadas, dirección)	              $0.032/req
+                                      Groq API (llama-3.1-8b)	              Extracción de ubicación + control de duplicados con IA	Gratis
+                                      Google Sheets API	                    Exportación de datos enriquecidos	                      Gratis
+
+Herramientas de Pago que Mejorarían el Proceso:   
+                                          Herramienta	                    Ventaja sobre la solución actual	                                                        Costo estimado
+                                      Informatica MDM	                Gestión de datos maestros a nivel empresarial, deduplicación avanzada	                       $50.000+/año
+                                      Melissa Data	                  Limpieza, normalización y deduplicación profesional de contactos y direcciones	             $300-500/mes
+                                      ZoomInfo	                      Enriquecimiento automático con datos financieros, empleados y contactos de empresas	         $10.000+/año
+                                      Talend Data Quality	            Plataforma completa de calidad de datos con reglas configurables	                           $500+/mes
+                                      Google Maps Platform (escala)	  Sin límites de rate, mayor precisión, SLA garantizado	                                       Ejemplo: $1.536 para 48k registros
+                                      n8n Cloud	                      Sin servidor local, ejecuciones programadas en la nube, alta disponibilidad	                 $20/mes
+                                      Supabase Pro	                  Más almacenamiento, backups automáticos, sin pausas por inactividad	                         $25/mes
+
+Problemas y Limitantes Encontrados:   
+                                            Problema	                                              Herramienta	                                    Solución Aplicada
+                              Docker no corría con WSL2	                                          Docker Desktop	                          Cambio a backend Hyper-V via BIOS
+                              process.env no disponible en Code nodes	                            n8n 2.14	                                Reemplazado por $env
+                              OpenAI sin crédito disponible (error 429)	                          OpenAI API	                              Reemplazado con Groq (gratuito)
+                              Error 400 en filtro lat=not.is.null	Supabase                        REST API	                                Filtro aplicado en JavaScript post-query
+                              Google Maps devuelve direcciones de otros países	                  Google Maps API	                          Validación posterior con Groq IA
+                              Esquema de herramienta incompatible con Groq	                      n8n + Groq	                              Cambio de GET query params a POST JSON body
+                              Workflows se desactivan al reiniciar Docker	                        n8n	                                      Reactivación manual tras cada restart
+                              Contenedores bloqueados sin poder detenerse	                        Docker Desktop	                          Restart completo de Docker Desktop
+                              Google Sheets requiere columna match en "Append or Update"	        Google Sheets + n8n	                      Cambio a operación simple "Append Row"
+                              Parsing incorrecto de ciudad/departamento en direcciones cortas	    Procesamiento de texto	                  Reemplazado con modelo IA Groq
+
+Estructura del Dataset (muestra):
+                                        Campo	                                    Tipo	                          Ejemplo
+                                    razon_social	                                texto	                        FERRETERÍA EL CONSTRUCTOR S.A.S
+                                    nit	                                          texto	                        900123456-1
+                                    camara_comercio	                              texto	                        MEDELLIN PARA ANTIOQUIA
+                                    representante_legal	                          texto	                        GARCÍA LÓPEZ CARLOS MARIO
+                                    organizacion_juridica	                        texto	                        Sociedad por Acciones Simplificada
+                                    estado_matricula	                            texto	                        ACTIVA
+                                    fecha_matricula	                              fecha	                        2015-03-12
+                                    fecha_renovacion	                            fecha	                        2024-01-08
+                                    direccion	                                    texto	                        Cra. 50 #32-18, El Poblado
+                                    ciudad	                                      texto	                        Medellín
+                                    departamento	                                texto	                        Antioquia
+                                    telefono	                                    texto	                        3104567890
+                                    lat	                                          decimal	                      6.2087
+                                    lng	                                          decimal	                      -75.5659
+                                    formatted_address	                            texto	                        Cra. 50 #32-18, El Poblado, Medellín, Antioquia
+                                    estado_info	                                  calculado	                    Completa / Incompleta
+                                    estado_legal	                                calculado	                    Legalmente constituida
+                                    estado_actividad	                            texto	                        Pendiente
+                                    geocodificado	                                booleano	                    true / false
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Johnnatan
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Para la creación del repositorio en GitHub, se tuvo una pequeña brecha en cuanto a manejo e instalación debido a que ya se tenía un conocimiento previo y básico, en la instalación de git no se tuvo inconvenientes, 
+en la creación del repositorio se procedió a crear carpetas y archivos correspondientes al proyecto establecido, se procedió a invitar al repositorio a los integrantes del equipo, y se procedió a indicar el manejo básico de uso del repositorio.
+
+Luego de determinar el uso de power bi se procedió a iniciar con la construcción de un tablero alternativo con campos calculados y una posible visualización basada en filtros, en este se tuvo un poco de dificultad en las medidas, pero se logró sortear 
+dicho impase y ver reflejado los resultados en el tablero.
+
+El equipo es compacto y cada uno aporta de una manera muy acertada desde su área de conocimiento, teniendo en cuenta todas las aristas que implica el proyecto, debido a eso se desarrolla con un buen tiempo la automatización requerida.
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Paulina
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Dentro del proceso de creación del dashboard, se exploraron en primer lugar diversas herramientas sobre las cuales trabajar, entre ellas, Google Data Studio y Streamlit. Sin embargo, 
+se determinó que Power BI sería la plataforma elegida en la que desplegaríamos la visualización de datos en el ejercicio. Esto, debido en parte a que la empresa de nuestro reto (Argos) utiliza internamente esta herramienta también. 
+Se trabajó sobre una base de datos preliminar de prueba, con la cual se planteó un esquema de mapa inicial, tomando como dato la ubicación de las cámaras de comercio alrededor del país.
+
+En segundo lugar, se comenzó a idear y plantear una propuesta de posibles comparaciones y distribución de los datos en el dashboard, que podrían aportar valor al análisis. Entre estos, 
+se encuentra un filtro manual que permita seleccionar las zonas en las que se encuentran distribuidos los negocios, para que, de esta manera, todos los demás esquemas se vean condicionados por esta selección; por ejemplo, el número de negocios, 
+cuántos de ellos se encuentran activos, la distribución por actividad (CIIU), entre otros.
 
