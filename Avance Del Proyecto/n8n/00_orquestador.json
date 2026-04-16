@@ -126,6 +126,21 @@
                 "conditions": [
                   {
                     "leftValue": "={{ $json.body.tipo }}",
+                    "rightValue": "scraping_web",
+                    "operator": { "type": "string", "operation": "equals" }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "scraping_web"
+            },
+            {
+              "conditions": {
+                "options": { "caseSensitive": false, "leftValue": "", "typeValidation": "strict" },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.body.tipo }}",
                     "rightValue": "proceso_completo",
                     "operator": { "type": "string", "operation": "equals" }
                   }
@@ -185,10 +200,25 @@
         "options": {}
       },
       "id": "a0b0c0d0-0000-0001-0001-000000000008",
-      "name": "Ejecutar: Exportar Sheets",
+      "name": "Ejecutar: Exportar Sheets (directo)",
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1,
       "position": [500, 600]
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "ID_SUB_WEB_SCRAPING",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "id": "a0b0c0d0-0000-0001-0001-000000000013",
+      "name": "Ejecutar: Scraping Web (directo)",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1,
+      "position": [500, 880]
     },
     {
       "parameters": {
@@ -203,7 +233,7 @@
       "name": "Completo 1: Carga CSV",
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1,
-      "position": [500, 760]
+      "position": [500, 1060]
     },
     {
       "parameters": {
@@ -224,16 +254,31 @@
       "parameters": {
         "workflowId": {
           "__rl": true,
+          "value": "ID_SUB_WEB_SCRAPING",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "id": "a0b0c0d0-0000-0001-0001-000000000014",
+      "name": "Completo 3: Web Scraping",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1,
+      "position": [980, 900]
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
           "value": "ID_SUB_EXPORTAR_SHEETS",
           "mode": "id"
         },
         "options": {}
       },
       "id": "a0b0c0d0-0000-0001-0001-000000000011",
-      "name": "Completo 3: Exportar Sheets",
+      "name": "Completo 4: Exportar Sheets",
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1,
-      "position": [980, 760]
+      "position": [1220, 900]
     }
   ],
   "connections": {
@@ -248,17 +293,21 @@
     },
     "Ruta por Tipo de Proceso": {
       "main": [
-        [{ "node": "Ejecutar: Carga CSV",             "type": "main", "index": 0 }],
-        [{ "node": "Ejecutar: Enriquecimiento Maps",   "type": "main", "index": 0 }],
-        [{ "node": "Ejecutar: Exportar Sheets",        "type": "main", "index": 0 }],
-        [{ "node": "Completo 1: Carga CSV",            "type": "main", "index": 0 }]
+        [{ "node": "Ejecutar: Carga CSV",                    "type": "main", "index": 0 }],
+        [{ "node": "Ejecutar: Enriquecimiento Maps",          "type": "main", "index": 0 }],
+        [{ "node": "Ejecutar: Exportar Sheets (directo)",     "type": "main", "index": 0 }],
+        [{ "node": "Ejecutar: Scraping Web (directo)",        "type": "main", "index": 0 }],
+        [{ "node": "Completo 1: Carga CSV",                   "type": "main", "index": 0 }]
       ]
     },
     "Completo 1: Carga CSV": {
       "main": [[{ "node": "Completo 2: Enriquecimiento Maps", "type": "main", "index": 0 }]]
     },
     "Completo 2: Enriquecimiento Maps": {
-      "main": [[{ "node": "Completo 3: Exportar Sheets", "type": "main", "index": 0 }]]
+      "main": [[{ "node": "Completo 3: Web Scraping", "type": "main", "index": 0 }]]
+    },
+    "Completo 3: Web Scraping": {
+      "main": [[{ "node": "Completo 4: Exportar Sheets", "type": "main", "index": 0 }]]
     }
   },
   "active": false,

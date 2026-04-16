@@ -1,0 +1,66 @@
+# ============================================================
+# docker-compose.yml principal — ejecutar desde esta carpeta:
+#   cd "c:\Users\Usuario\Documents\projects\Ferreterias Colombia"
+#   docker-compose up -d
+# ============================================================
+
+services:
+  n8n:
+    image: docker.n8n.io/n8nio/n8n:latest
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    volumes:
+      - ./n8n_data:/home/node/.n8n
+      - "./Avance Del Proyecto/data:/data"
+    environment:
+      - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY}
+      - N8N_HOST=localhost
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - WEBHOOK_URL=http://localhost:5678/
+      - NODE_FUNCTION_ALLOW_BUILTIN=*
+      - NODE_FUNCTION_ALLOW_EXTERNAL=*
+      - N8N_RUNNERS_ENABLED=false
+      - N8N_BLOCK_ENV_ACCESS_IN_NODE=false
+      - N8N_RESTRICT_FILE_ACCESS_TO=/data:/home/node/.n8n-files
+      - EXECUTIONS_TIMEOUT=14400
+      - EXECUTIONS_TIMEOUT_MAX=14400
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_SERVICE_KEY=${SUPABASE_SERVICE_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - GOOGLE_MAPS_API_KEY=${GOOGLE_MAPS_API_KEY}
+      - GROQ_API_KEY=${GROQ_API_KEY}
+      - DB_TYPE=sqlite
+      - DB_SQLITE_DATABASE=/home/node/.n8n/database.sqlite
+      - N8N_LOG_LEVEL=info
+    networks:
+      - ferreterias-net
+
+  python-api:
+    build:
+      context: "./Avance Del Proyecto/python-api"
+      dockerfile: Dockerfile
+    image: ferreterias-python-api:latest
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - "./Avance Del Proyecto/data:/data:ro"
+      - "./Avance Del Proyecto/python-api/app:/app/app"
+    environment:
+      - CSV_PATH=/data/ferreterias.csv
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_KEY=${SUPABASE_SERVICE_KEY}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - ferreterias-net
+
+networks:
+  ferreterias-net:
+    driver: bridge

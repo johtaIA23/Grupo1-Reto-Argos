@@ -1,0 +1,107 @@
+{
+  "name": "08 - Sub: Web Scraping Portafolio",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "c8504c46-6f0a-4fa5-a6e1-2c31cdc31a6b",
+      "name": "Cuando lo llama el Orquestador",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1,
+      "position": [-600, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "var SUPABASE_URL = $env.SUPABASE_URL;\nvar SUPABASE_KEY = $env.SUPABASE_SERVICE_KEY;\nif (!SUPABASE_URL || !SUPABASE_KEY) throw new Error('Faltan variables SUPABASE_URL o SUPABASE_SERVICE_KEY');\nvar staticData = $getWorkflowStaticData('global');\nstaticData.offset = 0;\nstaticData.totalEnriquecidos = 0;\nstaticData.totalFallidos = 0;\nvar LIMIT = 500;\nvar resp = await this.helpers.httpRequest({\n  method: 'GET',\n  url: SUPABASE_URL + '/rest/v1/ferreterias?select=id,razon_social,telefono,email,num_fuentes&or=(telefono.is.null,email.is.null)&order=id.asc&limit=' + LIMIT + '&offset=' + staticData.offset,\n  headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }\n});\nif (!Array.isArray(resp) || resp.length === 0) {\n  return [{ json: { _fin: true } }];\n}\nstaticData.offset += resp.length;\nvar tieneMas = resp.length === LIMIT;\nreturn resp.map(function(r) { return { json: Object.assign({}, r, { _tiene_mas: tieneMas }) }; });"
+      },
+      "id": "76b3c06d-099a-480d-98e2-b19ede3a1695",
+      "name": "Obtener Sin Teléfono/Email",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-380, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "conditions": [{ "id": "c1", "leftValue": "={{ $json._fin }}", "rightValue": true, "operator": { "type": "boolean", "operation": "equals" } }],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "8dd6bdb8-012e-4131-a37a-abe3615c3602",
+      "name": "¿Terminó?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [-160, 300]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "var SUPABASE_URL = $env.SUPABASE_URL;\nvar SUPABASE_KEY = $env.SUPABASE_SERVICE_KEY;\nvar GROQ_KEY = $env.GROQ_API_KEY;\nvar staticData = $getWorkflowStaticData('global');\nvar items = $input.all();\nvar tieneMas = items.some(function(i){ return i.json._tiene_mas === true; });\n\nfunction toSlug(n) {\n  var stop = {'Y':1,'DE':1,'DEL':1,'LA':1,'LAS':1,'LOS':1,'EL':1,'EN':1,'A':1,'E':1,'CON':1,'POR':1,'PARA':1,'SU':1,'AL':1,'UN':1,'UNA':1};\n  return n.toUpperCase()\n    .replace(/[\\u00c1\\u00c0]/g,'A').replace(/[\\u00c9\\u00c8]/g,'E')\n    .replace(/[\\u00cd\\u00cc]/g,'I').replace(/[\\u00d3\\u00d2]/g,'O')\n    .replace(/[\\u00da\\u00d9]/g,'U').replace(/\\u00d1/g,'N')\n    .replace(/\\./g,'').replace(/,/g,'').replace(/&/g,'')\n    .replace(/[^A-Z0-9\\s]/g,'')\n    .split(/\\s+/).filter(function(w){ return w && !stop[w]; })\n    .join('-').replace(/-+/g,'-');\n}\n\nfor (var i = 0; i < items.length; i++) {\n  var item = items[i].json;\n  var slug = toSlug(item.razon_social);\n  var url = 'https://empresas.portafolio.co/' + slug + '.html';\n  var tel = null, email = null, html_fragment = '';\n\n  try {\n    var html = await Promise.race([\n      this.helpers.httpRequest({\n        method: 'GET', url: url,\n        headers: {\n          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',\n          'Accept-Language': 'es-CO,es;q=0.9'\n        }\n      }),\n      new Promise(function(resolve){ setTimeout(function(){ resolve(''); }, 3000); })\n    ]);\n    if (html && !html.includes('Demasiadas peticiones') && !html.includes('reCAPTCHA')) {\n      var mTel = html.match(/<span[^>]+itemprop=[\"']telephone[\"'][^>]*>([^<]+)<\\/span>/i);\n      var mEmail = html.match(/<span[^>]+itemprop=[\"']email[\"'][^>]*>([^<]+)<\\/span>/i);\n      if (mTel) tel = mTel[1].trim();\n      if (mEmail) email = mEmail[1].trim();\n      if (!tel && !email) {\n        var idx = html.indexOf('listData');\n        var raw = idx !== -1 ? html.substring(Math.max(0,idx-100), idx+2000) : html.substring(0,2500);\n        html_fragment = raw.replace(/<script[^>]*>[\\s\\S]*?<\\/script>/gi,'').substring(0,2000);\n      }\n    }\n  } catch(e) { console.log('Fetch error ' + item.razon_social + ': ' + e.message); }\n\n  if (!tel && !email && html_fragment) {\n    try {\n      var groqResp = await this.helpers.httpRequest({\n        method: 'POST',\n        url: 'https://api.groq.com/openai/v1/chat/completions',\n        headers: { 'Authorization': 'Bearer ' + GROQ_KEY, 'Content-Type': 'application/json' },\n        body: JSON.stringify({\n          model: 'llama-3.1-8b-instant',\n          messages: [\n            { role: 'system', content: 'Eres un extractor de datos. Responde SOLO con JSON valido: {\"telefono\": \"NUMERO\", \"email\": \"CORREO\"}. Usa null si no encuentras. Sin texto adicional.' },\n            { role: 'user', content: 'Empresa: ' + item.razon_social + '\\n\\nHTML:\\n' + html_fragment }\n          ],\n          temperature: 0, max_tokens: 80\n        })\n      });\n      var content = groqResp.choices[0].message.content.trim();\n      var jsonMatch = content.match(/\\{[\\s\\S]*?\\}/);\n      if (jsonMatch) {\n        var datos = JSON.parse(jsonMatch[0]);\n        tel = datos.telefono || null;\n        email = datos.email || null;\n      }\n      console.log('Groq ' + item.razon_social + ': tel=' + tel + ', email=' + email);\n    } catch(e) { console.log('Groq error: ' + e.message); }\n  }\n\n  if (tel || email) {\n    var patch = { num_fuentes: (item.num_fuentes || 1) + 1 };\n    if (!item.telefono && tel) patch.telefono = tel;\n    if (!item.email && email) patch.email = email;\n    try {\n      await this.helpers.httpRequest({\n        method: 'PATCH',\n        url: SUPABASE_URL + '/rest/v1/ferreterias?id=eq.' + item.id,\n        headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },\n        body: JSON.stringify(patch)\n      });\n      staticData.totalEnriquecidos = (staticData.totalEnriquecidos || 0) + 1;\n      console.log('OK: ' + item.razon_social + ' tel=' + tel);\n    } catch(e) { console.error('PATCH error: ' + e.message); }\n  } else {\n    staticData.totalFallidos = (staticData.totalFallidos || 0) + 1;\n    console.log('Sin datos: ' + item.razon_social);\n  }\n\n  await new Promise(function(r){ setTimeout(r, 1000); });\n}\n\nreturn [{ json: { _tiene_mas: tieneMas, total_enriquecidos: staticData.totalEnriquecidos, total_fallidos: staticData.totalFallidos } }];"
+      },
+      "id": "n-scraping-guardar",
+      "name": "Scraping y Guardar",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [80, 460]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "conditions": [{ "id": "c3", "leftValue": "={{ $json._tiene_mas }}", "rightValue": true, "operator": { "type": "boolean", "operation": "equals" } }],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "f2d6831d-ea72-4986-9549-ab87d2913228",
+      "name": "¿Continuar?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [320, 460]
+    },
+    {
+      "parameters": {
+        "jsCode": "var staticData = $getWorkflowStaticData('global');\nreturn [{ json: { estado: 'SCRAPING COMPLETADO', total_enriquecidos: staticData.totalEnriquecidos||0, total_fallidos: staticData.totalFallidos||0 } }];"
+      },
+      "id": "a4ac9747-6692-4c17-9295-742e6564b1fb",
+      "name": "Resumen Final",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-160, 140]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Cuando lo llama el Orquestador": {
+      "main": [[{ "node": "Obtener Sin Teléfono/Email", "type": "main", "index": 0 }]]
+    },
+    "Obtener Sin Teléfono/Email": {
+      "main": [[{ "node": "¿Terminó?", "type": "main", "index": 0 }]]
+    },
+    "¿Terminó?": {
+      "main": [
+        [{ "node": "Resumen Final", "type": "main", "index": 0 }],
+        [{ "node": "Scraping y Guardar", "type": "main", "index": 0 }]
+      ]
+    },
+    "Scraping y Guardar": {
+      "main": [[{ "node": "¿Continuar?", "type": "main", "index": 0 }]]
+    },
+    "¿Continuar?": {
+      "main": [
+        [{ "node": "Obtener Sin Teléfono/Email", "type": "main", "index": 0 }],
+        [{ "node": "Resumen Final", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "active": true,
+  "settings": { "executionOrder": "v1", "saveExecutionProgress": true },
+  "versionId": "08-sub-web-scraping-v16",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "fdc3455e171b469947c3890a0863dd15283c28c3472d790c08033691dc152be1"
+  },
+  "id": "DgAqfxSEYC3X9DoZ",
+  "tags": []
+}
