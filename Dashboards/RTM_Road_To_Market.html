@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Dashboard RTM · Road To Market</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{
+  --white:#FFFFFF;
+  --navy:#071D49;
+  --navy-80:rgba(7,29,73,0.8);
+  --navy-10:rgba(7,29,73,0.06);
+  --navy-20:rgba(7,29,73,0.12);
+  --lime:#C4D600;
+  --lime-20:rgba(196,214,0,0.2);
+  --lime-40:rgba(196,214,0,0.4);
+  --muted:#5B7089;
+  --border:#D8E0EE;
+  --danger:#D92D20;
+  --warn:#DC6803;
+  --success:#027A48;
+  --r:10px;
+  --rs:6px;
+  --sh:0 1px 3px rgba(7,29,73,.08),0 4px 16px rgba(7,29,73,.06);
+  --sh-hover:0 4px 12px rgba(7,29,73,.14),0 12px 32px rgba(7,29,73,.10);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  background:var(--white);
+  color:var(--navy);
+  font-family:'Outfit',sans-serif;
+  font-size:14px;
+  line-height:1.5;
+  min-height:100vh;
+}
+
+/* ═══════════════════════════════ HEADER */
+.hdr{
+  position:sticky;top:0;z-index:900;
+  background:var(--navy);
+  border-bottom:2px solid var(--lime);
+  padding:0 32px;
+  display:flex;align-items:center;gap:20px;
+  height:62px;
+}
+.hdr-logo{
+  display:flex;align-items:center;gap:12px;flex-shrink:0;
+}
+.hdr-emblem{
+  width:38px;height:38px;
+  background:var(--lime);
+  border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Cormorant Garamond',serif;
+  font-weight:700;font-size:20px;
+  color:var(--navy);letter-spacing:-1px;
+}
+.hdr-name{
+  font-family:'Cormorant Garamond',serif;
+  font-size:20px;font-weight:600;
+  color:var(--white);line-height:1.1;
+}
+.hdr-sub{font-size:10px;color:rgba(255,255,255,.45);font-weight:300;letter-spacing:.6px;text-transform:uppercase;}
+.hdr-divider{width:1px;height:32px;background:rgba(255,255,255,.15);margin:0 4px;}
+.hdr-spacer{flex:1;}
+.hdr-meta{text-align:right;}
+.hdr-records{
+  font-size:22px;font-weight:700;
+  font-family:'Cormorant Garamond',serif;
+  color:var(--lime);line-height:1;
+}
+.hdr-records-lbl{font-size:10px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.8px;}
+.upload-zone{
+  display:flex;align-items:center;gap:8px;
+  background:transparent;
+  border:1.5px solid var(--lime);
+  color:var(--lime);
+  padding:8px 18px;
+  border-radius:var(--rs);
+  font-family:'Outfit',sans-serif;
+  font-size:12px;font-weight:600;
+  cursor:pointer;
+  transition:.18s;
+  letter-spacing:.4px;text-transform:uppercase;
+  white-space:nowrap;
+}
+.upload-zone:hover{background:var(--lime);color:var(--navy);}
+.upload-zone svg{flex-shrink:0;}
+#fileIn{display:none;}
+
+/* ═══════════════════════════════ MAIN */
+.wrap{padding:24px 32px 48px;}
+
+/* ═══════════════════════════════ SECTION LABEL */
+.sec{
+  display:flex;align-items:center;gap:10px;
+  margin:24px 0 12px;
+}
+.sec-line{flex:1;height:1px;background:var(--border);}
+.sec-txt{
+  font-size:10px;font-weight:700;
+  letter-spacing:2.2px;text-transform:uppercase;
+  color:var(--muted);white-space:nowrap;
+}
+.sec-accent{
+  width:6px;height:6px;background:var(--lime);
+  border-radius:50%;flex-shrink:0;
+}
+
+/* ═══════════════════════════════ KPI GRID */
+.kpi-grid{
+  display:grid;
+  grid-template-columns:repeat(6,1fr);
+  gap:12px;margin-bottom:4px;
+}
+.kpi{
+  background:var(--white);
+  border:1px solid var(--border);
+  border-radius:var(--r);
+  padding:16px 18px 14px;
+  position:relative;overflow:hidden;
+  box-shadow:var(--sh);
+  transition:.2s;cursor:default;
+}
+.kpi::after{
+  content:'';
+  position:absolute;bottom:0;left:0;right:0;height:3px;
+  background:var(--border);
+  border-radius:0 0 var(--r) var(--r);
+  transition:.2s;
+}
+.kpi:hover{box-shadow:var(--sh-hover);transform:translateY(-2px);}
+.kpi:hover::after{background:var(--lime);}
+.kpi.hi{border-color:var(--lime);border-top:2.5px solid var(--lime);}
+.kpi.hi::after{background:var(--lime);}
+.kpi-icon{
+  width:28px;height:28px;
+  background:var(--navy-10);border-radius:7px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:14px;margin-bottom:10px;
+}
+.kpi.hi .kpi-icon{background:var(--lime-20);}
+.kpi-lbl{
+  font-size:9.5px;font-weight:700;
+  letter-spacing:1.4px;text-transform:uppercase;
+  color:var(--muted);margin-bottom:4px;
+}
+.kpi-val{
+  font-family:'Cormorant Garamond',serif;
+  font-size:34px;font-weight:700;
+  color:var(--navy);line-height:1;
+  margin-bottom:2px;
+}
+.kpi.hi .kpi-val{color:var(--navy);}
+.kpi-sub{font-size:11px;color:var(--muted);}
+.kpi-badge{
+  position:absolute;top:14px;right:14px;
+  background:var(--lime);color:var(--navy);
+  font-size:9px;font-weight:800;
+  padding:2px 7px;border-radius:20px;
+  letter-spacing:.6px;text-transform:uppercase;
+}
+
+/* ═══════════════════════════════ FILTERS */
+.filters{
+  background:var(--navy-10);
+  border:1px solid var(--border);
+  border-left:3px solid var(--lime);
+  border-radius:var(--r);
+  padding:16px 20px;
+  display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;
+}
+.fg{display:flex;flex-direction:column;gap:5px;}
+.fg-lbl{
+  font-size:9.5px;font-weight:700;
+  letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);
+}
+select,input[type=text]{
+  background:var(--white);
+  border:1px solid var(--border);
+  border-radius:var(--rs);
+  padding:8px 12px;
+  font-family:'Outfit',sans-serif;
+  font-size:13px;color:var(--navy);
+  outline:none;transition:.15s;
+  min-width:155px;
+}
+select:focus,input[type=text]:focus{border-color:var(--lime);box-shadow:0 0 0 3px var(--lime-20);}
+input[type=text]{min-width:210px;}
+.btn{
+  border:none;border-radius:var(--rs);
+  font-family:'Outfit',sans-serif;
+  font-weight:600;font-size:12px;
+  cursor:pointer;transition:.15s;
+  padding:9px 20px;letter-spacing:.3px;
+}
+.btn-primary{background:var(--navy);color:var(--white);}
+.btn-primary:hover{background:#0d2d6e;}
+.btn-outline{background:transparent;color:var(--muted);border:1px solid var(--border);}
+.btn-outline:hover{border-color:var(--navy);color:var(--navy);}
+.btn-export{background:var(--lime);color:var(--navy);}
+.btn-export:hover{background:#d4e800;}
+
+/* ═══════════════════════════════ TWO-COL */
+.two{display:grid;grid-template-columns:1fr 320px;gap:16px;margin-bottom:4px;}
+
+/* ═══════════════════════════════ CARD */
+.card{
+  background:var(--white);
+  border:1px solid var(--border);
+  border-radius:var(--r);
+  box-shadow:var(--sh);overflow:hidden;
+}
+.card-hdr{
+  background:var(--navy);
+  padding:13px 18px;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.card-ttl{
+  display:flex;align-items:center;gap:8px;
+  font-family:'Cormorant Garamond',serif;
+  font-size:15px;font-weight:600;color:var(--white);
+}
+.card-ico{
+  width:24px;height:24px;background:var(--lime);
+  border-radius:5px;display:flex;align-items:center;justify-content:center;
+  font-size:12px;
+}
+.card-pill{
+  background:var(--lime-20);color:var(--lime);
+  border:1px solid var(--lime-40);
+  font-size:10px;font-weight:700;
+  padding:3px 10px;border-radius:20px;
+  letter-spacing:.5px;text-transform:uppercase;
+}
+
+/* ═══════════════════════════════ MAP */
+#map{height:430px;}
+.map-legend{
+  display:flex;gap:14px;padding:10px 16px;
+  border-top:1px solid var(--border);
+  background:var(--navy-10);
+}
+.leg-item{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);}
+.leg-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+
+/* ═══════════════════════════════ RANKING */
+.rank-body{padding:10px;overflow-y:auto;max-height:430px;}
+.rank-row{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 10px;border-radius:8px;
+  margin-bottom:4px;cursor:pointer;
+  transition:.14s;border:1px solid transparent;
+}
+.rank-row:hover{background:var(--navy-10);border-color:var(--border);}
+.rank-row.gold{background:rgba(196,214,0,0.08);border-color:var(--lime-40);}
+.rank-n{
+  font-family:'Cormorant Garamond',serif;
+  font-size:18px;font-weight:700;color:var(--muted);
+  width:22px;text-align:center;flex-shrink:0;
+}
+.rank-row.gold .rank-n{color:var(--navy);}
+.rank-inf{flex:1;min-width:0;}
+.rank-city{font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.rank-dept{font-size:10.5px;color:var(--muted);}
+.rank-right{text-align:right;flex-shrink:0;}
+.rank-sc{
+  font-family:'Cormorant Garamond',serif;
+  font-size:22px;font-weight:700;color:var(--navy);
+}
+.rank-bar-track{width:56px;height:3px;background:var(--border);border-radius:2px;margin-top:4px;margin-left:auto;}
+.rank-bar-fill{height:100%;background:var(--lime);border-radius:2px;}
+
+/* ═══════════════════════════════ CHARTS ROW */
+.charts-row{display:grid;grid-template-columns:1.2fr 1fr;gap:16px;margin-bottom:4px;}
+.chart-body{padding:16px 18px;}
+.bar-ch{display:flex;flex-direction:column;gap:9px;}
+.b-row{display:flex;align-items:center;gap:9px;}
+.b-lbl{
+  font-size:11px;color:var(--muted);
+  width:88px;text-align:right;flex-shrink:0;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.b-track{flex:1;height:14px;background:var(--navy-10);border-radius:3px;overflow:hidden;}
+.b-fill{height:100%;background:var(--navy);border-radius:3px;transition:width .6s cubic-bezier(.4,0,.2,1);}
+.b-fill.lime{background:var(--lime);}
+.b-val{font-size:11px;font-weight:700;color:var(--navy);width:28px;text-align:right;}
+
+/* Donut */
+.donut-wrap{display:flex;align-items:center;justify-content:center;gap:18px;padding:8px 0;}
+.d-legend{display:flex;flex-direction:column;gap:9px;}
+.d-li{display:flex;align-items:center;gap:7px;font-size:11.5px;}
+.d-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.d-pct{font-weight:700;color:var(--navy);margin-left:auto;padding-left:10px;font-size:13px;}
+
+/* Prioridad bars */
+.pri-row{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+.pri-label{
+  font-size:12px;font-weight:700;width:18px;text-align:center;flex-shrink:0;
+}
+.pri-track{flex:1;height:20px;background:var(--navy-10);border-radius:4px;overflow:hidden;position:relative;}
+.pri-fill{height:100%;border-radius:4px;display:flex;align-items:center;justify-content:flex-end;padding-right:8px;}
+.pri-fill-val{font-size:11px;font-weight:700;color:var(--white);}
+.pri-cnt{font-size:11px;font-weight:600;color:var(--muted);width:22px;}
+
+/* ═══════════════════════════════ TABLE */
+.tbl-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;}
+thead tr{background:var(--navy);}
+thead th{
+  padding:11px 13px;text-align:left;
+  font-size:9.5px;font-weight:700;
+  letter-spacing:1.4px;text-transform:uppercase;
+  color:rgba(255,255,255,.6);
+  white-space:nowrap;cursor:pointer;user-select:none;
+  border-right:1px solid rgba(255,255,255,.07);
+  transition:.12s;
+}
+thead th:hover,thead th.sorted{color:var(--lime);}
+tbody tr{border-bottom:1px solid var(--border);transition:background .1s;}
+tbody tr:hover{background:var(--navy-10);}
+tbody td{padding:9px 13px;font-size:12.5px;}
+.tbl-foot{
+  padding:11px 16px;
+  display:flex;align-items:center;justify-content:space-between;
+  border-top:1px solid var(--border);
+  background:var(--navy-10);
+}
+.tbl-info{font-size:11px;color:var(--muted);}
+.pg{display:flex;gap:3px;}
+.pg-btn{
+  width:28px;height:28px;display:flex;align-items:center;justify-content:center;
+  border:1px solid var(--border);border-radius:5px;
+  background:var(--white);font-size:12px;cursor:pointer;
+  color:var(--navy);transition:.12s;
+}
+.pg-btn:hover{background:var(--navy);color:var(--white);border-color:var(--navy);}
+.pg-btn.on{background:var(--navy);color:var(--lime);border-color:var(--navy);font-weight:700;}
+
+/* Badges */
+.badge{
+  display:inline-flex;align-items:center;
+  padding:2px 8px;border-radius:20px;
+  font-size:9.5px;font-weight:800;
+  letter-spacing:.5px;text-transform:uppercase;
+}
+.ba{background:#DCFCE7;color:#166534;}
+.bi{background:#FEE2E2;color:#991B1B;}
+.bp{background:#FEF9C3;color:#92400E;}
+.bn{background:var(--navy-10);color:var(--muted);}
+
+.sc-chip{
+  display:inline-flex;align-items:center;justify-content:center;
+  min-width:38px;height:22px;border-radius:5px;
+  font-size:12px;font-weight:800;padding:0 6px;
+}
+.sca{background:var(--lime);color:var(--navy);}
+.scb{background:#FEF9C3;color:#92400E;}
+.scc{background:#FEE2E2;color:#991B1B;}
+
+.pf{font-size:12px;font-weight:700;}
+.pfa{color:#166534;}
+.pfb{color:#92400E;}
+.pfc{color:#991B1B;}
+
+/* ═══════════════════════════════ EMPTY */
+.empty{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:100px 40px;text-align:center;color:var(--muted);
+}
+.empty-ico{font-size:64px;opacity:.25;margin-bottom:20px;}
+.empty-ttl{
+  font-family:'Cormorant Garamond',serif;
+  font-size:24px;font-weight:600;color:var(--navy);margin-bottom:8px;
+}
+.empty-sub{font-size:13px;max-width:360px;line-height:1.7;}
+
+/* ═══════════════════════════════ LOADER */
+.loader{
+  display:none;position:fixed;inset:0;
+  background:rgba(7,29,73,.6);z-index:9999;
+  align-items:center;justify-content:center;flex-direction:column;gap:14px;
+}
+.loader.on{display:flex;}
+.spin{
+  width:42px;height:42px;
+  border:3px solid rgba(196,214,0,.25);
+  border-top-color:var(--lime);
+  border-radius:50%;animation:sp .7s linear infinite;
+}
+@keyframes sp{to{transform:rotate(360deg)}}
+.load-txt{color:var(--lime);font-weight:600;font-size:13px;letter-spacing:.4px;}
+
+/* ═══════════════════════════════ TOOLTIP */
+.leaflet-popup-content-wrapper{
+  font-family:'Outfit',sans-serif;border-radius:10px!important;
+  box-shadow:0 8px 32px rgba(7,29,73,.2)!important;
+  border:1px solid var(--border);padding:0!important;
+}
+.leaflet-popup-content{margin:0!important;}
+.pop{padding:14px 16px;min-width:180px;}
+.pop-city{font-weight:700;font-size:14px;color:var(--navy);margin-bottom:2px;}
+.pop-dept{font-size:11px;color:var(--muted);margin-bottom:10px;}
+.pop-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px 10px;}
+.pop-kv{font-size:11.5px;}
+.pop-k{color:var(--muted);}
+.pop-v{font-weight:700;color:var(--navy);}
+.pop-score{
+  margin-top:8px;padding-top:8px;border-top:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.pop-sl{font-size:11px;color:var(--muted);}
+.pop-sv{
+  font-family:'Cormorant Garamond',serif;
+  font-size:22px;font-weight:700;color:var(--navy);
+}
+
+@media(max-width:1280px){
+  .kpi-grid{grid-template-columns:repeat(3,1fr);}
+  .two{grid-template-columns:1fr;}
+  .charts-row{grid-template-columns:1fr 1fr;}
+}
+@media(max-width:800px){
+  .wrap{padding:16px;}
+  .kpi-grid{grid-template-columns:1fr 1fr;}
+  .charts-row{grid-template-columns:1fr;}
+  .hdr{padding:0 16px;}
+}
+</style>
+</head>
+<body>
+
+<div class="loader" id="loader">
+  <div class="spin"></div>
+  <div class="load-txt">Procesando base de datos…</div>
+</div>
+
+<!-- ─── HEADER ─── -->
+<header class="hdr">
+  <div class="hdr-logo">
+    <div class="hdr-emblem">RTM</div>
+    <div>
+      <div class="hdr-name">Road To Market</div>
+      <div class="hdr-sub">Inteligencia Comercial · Materiales de Construcción</div>
+    </div>
+  </div>
+  <div class="hdr-divider"></div>
+  <div class="hdr-spacer"></div>
+  <div class="hdr-meta" id="hdrMeta" style="display:none;">
+    <div class="hdr-records" id="hdrRec">0</div>
+    <div class="hdr-records-lbl">Empresas cargadas</div>
+  </div>
+  <button class="upload-zone" onclick="document.getElementById('fileIn').click()">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+    Cargar / Actualizar Excel
+  </button>
+  <input type="file" id="fileIn" accept=".xlsx,.xls" onchange="loadFile(event)"/>
+</header>
+
+<!-- ─── MAIN ─── -->
+<div class="wrap">
+
+  <!-- EMPTY -->
+  <div id="emptyState">
+    <div class="empty">
+      <div class="empty-ico">🗺️</div>
+      <div class="empty-ttl">Cargue su base de datos para iniciar</div>
+      <div class="empty-sub">Haga clic en <strong>Cargar / Actualizar Excel</strong> para importar el archivo con el directorio de ferreterías y distribuidores por territorio.</div>
+      <br/>
+      <button class="btn btn-primary" onclick="loadDemo()" style="margin-top:8px;">Cargar datos de muestra</button>
+    </div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div id="dash" style="display:none;">
+
+    <!-- KPIs -->
+    <div class="sec"><div class="sec-accent"></div><span class="sec-txt">Indicadores Clave de Territorio</span><div class="sec-line"></div></div>
+    <div class="kpi-grid" id="kpiGrid"></div>
+
+    <!-- FILTERS -->
+    <div class="sec"><div class="sec-accent"></div><span class="sec-txt">Filtros de Búsqueda</span><div class="sec-line"></div></div>
+    <div class="filters">
+      <div class="fg">
+        <span class="fg-lbl">Departamento</span>
+        <select id="fDpto" onchange="onDptoChange()"><option value="">Todos</option></select>
+      </div>
+      <div class="fg">
+        <span class="fg-lbl">Ciudad</span>
+        <select id="fCiudad" onchange="applyF()"><option value="">Todas</option></select>
+      </div>
+      <div class="fg">
+        <span class="fg-lbl">Cámara de Comercio</span>
+        <select id="fCamara" onchange="applyF()"><option value="">Todas</option></select>
+      </div>
+      <div class="fg">
+        <span class="fg-lbl">Estado Matrícula</span>
+        <select id="fEstado" onchange="applyF()">
+          <option value="">Todos</option>
+          <option>ACTIVA</option><option>INACTIVA</option><option>CANCELADA</option>
+        </select>
+      </div>
+      <div class="fg">
+        <span class="fg-lbl">Prioridad Score</span>
+        <select id="fPrio" onchange="applyF()">
+          <option value="">Todas</option>
+          <option value="A">A — Alta (≥70)</option>
+          <option value="B">B — Media (40–69)</option>
+          <option value="C">C — Baja (&lt;40)</option>
+        </select>
+      </div>
+      <div class="fg">
+        <span class="fg-lbl">Buscar Razón Social / NIT</span>
+        <input type="text" id="fSearch" placeholder="Escriba para buscar…" oninput="applyF()"/>
+      </div>
+      <button class="btn btn-outline" onclick="resetF()">✕ Limpiar</button>
+      <button class="btn btn-export" onclick="exportData()">⬇ Exportar</button>
+    </div>
+
+    <!-- MAP + RANKING -->
+    <div class="sec"><div class="sec-accent"></div><span class="sec-txt">Distribución Geográfica & Ranking</span><div class="sec-line"></div></div>
+    <div class="two">
+      <div class="card">
+        <div class="card-hdr">
+          <div class="card-ttl"><div class="card-ico">🗺</div>Mapa de Territorios Prioritarios</div>
+          <div class="card-pill" id="mapPill">— ciudades</div>
+        </div>
+        <div id="map"></div>
+        <div class="map-legend">
+          <div class="leg-item"><div class="leg-dot" style="background:#C4D600;border:1.5px solid #071D49;"></div>Score Alto ≥70</div>
+          <div class="leg-item"><div class="leg-dot" style="background:#F59E0B;border:1.5px solid #071D49;"></div>Score Medio 40–69</div>
+          <div class="leg-item"><div class="leg-dot" style="background:#EF4444;border:1.5px solid #071D49;"></div>Score Bajo &lt;40</div>
+          <div class="leg-item" style="margin-left:auto;font-size:10.5px;">● Tamaño = Nº empresas</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-hdr">
+          <div class="card-ttl"><div class="card-ico">🏆</div>Top Ciudades por Score</div>
+        </div>
+        <div class="rank-body" id="rankPanel"></div>
+      </div>
+    </div>
+
+    <!-- CHARTS -->
+    <div class="sec"><div class="sec-accent"></div><span class="sec-txt">Análisis Multidimensional</span><div class="sec-line"></div></div>
+    <div class="charts-row">
+      <div class="card">
+        <div class="card-hdr"><div class="card-ttl"><div class="card-ico">📊</div>Score Promedio por Departamento</div></div>
+        <div class="chart-body"><div class="bar-ch" id="chDpto"></div></div>
+      </div>
+      <div class="card">
+        <div class="card-hdr"><div class="card-ttl"><div class="card-ico">🎯</div>Distribución por Prioridad</div></div>
+        <div class="chart-body" id="chPrio"></div>
+      </div>
+    </div>
+
+    <!-- TABLE -->
+    <div class="sec"><div class="sec-accent"></div><span class="sec-txt">Directorio de Empresas</span><div class="sec-line"></div></div>
+    <div class="card">
+      <div class="tbl-wrap">
+        <table>
+          <thead id="thead"></thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+      <div class="tbl-foot">
+        <div class="tbl-info" id="tblInfo"></div>
+        <div style="display:flex;gap:14px;align-items:center;">
+          <div style="display:flex;gap:6px;font-size:10.5px;align-items:center;">
+            <span class="sc-chip sca" style="min-width:auto;padding:0 7px;height:18px;font-size:10px;">≥70</span>Alta
+            <span class="sc-chip scb" style="min-width:auto;padding:0 7px;height:18px;font-size:10px;">40–69</span>Media
+            <span class="sc-chip scc" style="min-width:auto;padding:0 7px;height:18px;font-size:10px;">&lt;40</span>Baja
+          </div>
+          <div class="pg" id="pg"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════ STATE */
+let RAW=[], FLT=[], page=1, sortK='score', sortA=false;
+const PG=20;
+let mapInst=null, mLayer=null;
+
+/* ═══════════════════════════════════════════ DEMO DATA */
+const DEMO=[
+  {id:"0b961236",camara_comercio:"Bogotá",razon_social:"Deposito Y Ferreteria Del San Jose No 2 S A S",nit:"901369960",estado_matricula:"ACTIVA",fecha_matricula:"2020-02-24",fecha_renovacion:"2025-01-16",representante_legal:"MARTHA LUCIA ORJUELA DUEÑAS",ciudad:"Bogotá",Departamento:"Bogotá",telefono:"3212090637",email:"",lat:4.6656874,lng:-74.1197988,estado_info:"Incompleta",estado_legal:"Legalmente constituida",estado_actividad:"Pendiente",num_fuentes:2},
+  {id:"1f18dace",camara_comercio:"Oriente Antioqueño",razon_social:"MATERIALES DE CONSTRUCCION EL CARRETON S.A.S",nit:"900520539",estado_matricula:"ACTIVA",fecha_matricula:"2012-05-02",fecha_renovacion:"2026-03-31",representante_legal:"LOPEZ OSORIO MIGUEL ANGEL",ciudad:"La Ceja",Departamento:"Antioquia",telefono:"6045532377",email:"",lat:6.0924,lng:-75.4500,estado_info:"Incompleta",estado_legal:"Legalmente constituida",estado_actividad:"Pendiente",num_fuentes:3},
+  {id:"52117142",camara_comercio:"Chocó",razon_social:"MADERAS & CEMENTOS EL CONSTRUCTOR S.A.S.",nit:"901026858",estado_matricula:"ACTIVA",fecha_matricula:"2016-11-11",fecha_renovacion:"2026-03-06",representante_legal:"RONIER MENA RIOS",ciudad:"Quibdó",Departamento:"Chocó",telefono:"3192209392",email:"",lat:5.6910844,lng:-76.6598025,estado_info:"Incompleta",estado_legal:"Legalmente constituida",estado_actividad:"Pendiente",num_fuentes:3},
+  {id:"7cfb6c2b",camara_comercio:"Palmira",razon_social:"FERRETERIA Y DEPOSITO LA H S.A.S.",nit:"901040860",estado_matricula:"ACTIVA",fecha_matricula:"2017-01-02",fecha_renovacion:"2026-03-28",representante_legal:"HERRERA QUIGUA ANDRES FABIAN",ciudad:"Palmira",Departamento:"Valle del Cauca",telefono:"6022855730",email:"",lat:3.5385614,lng:-76.3107224,estado_info:"Incompleta",estado_legal:"Legalmente constituida",estado_actividad:"Pendiente",num_fuentes:3},
+  {id:"8e0ce82d",camara_comercio:"Aburrá Sur",razon_social:"COMERCIALIZADORA Y DISTRIBUIDORA DE MATERIALES JAR S A S",nit:"900295648",estado_matricula:"ACTIVA",fecha_matricula:"2009-06-23",fecha_renovacion:"2026-03-16",representante_legal:"JOSE ABEL RINCON CHAUTA",ciudad:"La Estrella",Departamento:"Antioquia",telefono:"6012213882",email:"",lat:6.1535103,lng:-75.6318422,estado_info:"Incompleta",estado_legal:"Legalmente constituida",estado_actividad:"Pendiente",num_fuentes:2},
+  {id:"8e266346",camara_comercio:"Medellín",razon_social:"MATERIALES Y FERRETERIA SERVICARGA S.A.S",nit:"900978429",estado_matricula:"ACTIVA",fecha_matricula:"2016-06-09",fecha_renovacion:"2026-03-31",representante_legal:"ELADIO JAIME SOTO ATEHORTUA",ciudad:"Medellín",Departamento:"Antioquia",telefono:"6045744503",email:"",lat:6.2082691,lng:-75.5159637,estado_info:"Incompleta",estado_legal:"Legalmente constituida",estado_actividad:"Pendiente",num_fuentes:3},
+  {id:"ba66ce17",camara_comercio:"Cúcuta",razon_social:"FERRETERIA Y DEPOSITO DE MATERIALES J SEBAS S.A.S",nit:"901368012",estado_matricula:"ACTIVA",fecha_matricula:"2020-01-30",fecha_renovacion:"2025-04-04",representante_legal:"ARDILA QUIJANO LIBIA SUSANA",ciudad:"Cúcuta",Departamento:"Norte de Santander",telefono:"3172623722",email:"",lat:7.9404272,lng:-72.5245452,estado_info:"Incompleta",estado_legal:"Legalmente constituida",estado_actividad:"Pendiente",num_fuentes:3},
+  {id:"c846c4ef",camara_comercio:"Armenia",razon_social:"FERRETERIA CEMENTOS VILLEGAS SAS",nit:"901862570",estado_matricula:"ACTIVA",fecha_matricula:"2024-08-21",fecha_renovacion:"2026-02-05",representante_legal:"VILLEGAS PALACIO DIEGO ANDRES",ciudad:"Armenia",Departamento:"Quindío",telefono:"3023728739",email:"",lat:4.5367904,lng:-75.6708258,estado_info:"Incompleta",estado_legal:"Legalmente constituida",estado_actividad:"Pendiente",num_fuentes:3},
+  {id:"cec562f1",camara_comercio:"Aburrá Sur",razon_social:"DISTRIBUIDORA DE MATERIALES DE CONSTRUCCION LA TEJA SAS",nit:"902045504",estado_matricula:"ACTIVA",fecha_matricula:"2026-03-11",fecha_renovacion:"2026-03-11",representante_legal:"LARGO SALAZAR LAURA CAROLINA",ciudad:"Caldas",Departamento:"Antioquia",telefono:"3137945477",email:"",lat:6.0924002,lng:-75.6380330,estado_info:"Incompleta",estado_legal:"Legalmente constituida",estado_actividad:"Pendiente",num_fuentes:3},
+  {id:"f1224b9b",camara_comercio:"Villavicencio",razon_social:"COMERCIALIZADORA DE MATERIALES DE CONSTRUCCION Y AGROPECUARIOS S.A.S.",nit:"900613452",estado_matricula:"ACTIVA",fecha_matricula:"2013-04-29",fecha_renovacion:"2025-06-06",representante_legal:"GARCIA AVELLA WILDER HOMERO",ciudad:"Villavicencio",Departamento:"Meta",telefono:"3114803488",email:"",lat:4.1079481,lng:-73.6550634,estado_info:"Incompleta",estado_legal:"Legalmente constituida",estado_actividad:"Pendiente",num_fuentes:2}
+];
+
+/* ═══════════════════════════════════════════ SCORE */
+function calcScore(d){
+  const r=d.dias_renovacion<=60?35:d.dias_renovacion<=180?18:d.dias_renovacion<=365?8:0;
+  const a=d.antiguedad_anos>=10?40:d.antiguedad_anos>=5?30:d.antiguedad_anos>=2?15:5;
+  const f=(d.num_fuentes/3)*25;
+  return Math.round(r+a+f);
+}
+
+/* ═══════════════════════════════════════════ NORMALIZE */
+function norm(r,i){
+  const today=new Date();
+  const pd=v=>{
+    if(!v)return null;
+    if(v instanceof Date)return v;
+    const d=new Date(v);return isNaN(d)?null:d;
+  };
+  const fRen=pd(r.fecha_renovacion);
+  const fMat=pd(r.fecha_matricula);
+  const diasR=fRen?Math.round((fRen-today)/86400000):999;
+  const anosA=fMat?(today-fMat)/(365.25*86400000):0;
+  const nF=parseFloat(r.num_fuentes)||0;
+  const score=calcScore({dias_renovacion:diasR,antiguedad_anos:anosA,num_fuentes:nF});
+  const prio=score>=70?'A':score>=40?'B':'C';
+  // Fix lat/lng if they come as large integers (divide by 1e7)
+  let lat=parseFloat(r.lat)||null;
+  let lng=parseFloat(r.lng)||null;
+  if(lat&&Math.abs(lat)>90) lat=lat/1e7;
+  if(lng&&Math.abs(lng)>180) lng=lng/1e7;
+  // Validate Colombia bounds
+  const validLL=lat&&lng&&lat>-5&&lat<13&&lng>-82&&lng<-66;
+  return{
+    _i:i,id:r.id||i,
+    camara_comercio:String(r.camara_comercio||'').trim(),
+    razon_social:String(r.razon_social||'').trim(),
+    nit:String(r.nit||'').trim(),
+    estado_matricula:String(r.estado_matricula||'').trim().toUpperCase(),
+    fecha_matricula:fMat,fecha_renovacion:fRen,
+    representante_legal:String(r.representante_legal||'').trim(),
+    ciudad:String(r.ciudad||r.Ciudad||'').trim(),
+    departamento:String(r.Departamento||r.departamento||'').trim(),
+    telefono:String(r.telefono||'').trim(),
+    email:String(r.email||'').trim(),
+    lat:validLL?lat:null,lng:validLL?lng:null,
+    estado_info:String(r.estado_info||'').trim(),
+    estado_legal:String(r.estado_legal||'').trim(),
+    estado_actividad:String(r.estado_actividad||'').trim(),
+    num_fuentes:nF,
+    dias_renovacion:diasR,
+    antiguedad_anos:anosA,
+    formatted_address:String(r.formatted_address||r.direccion||'').trim(),
+    score,prio
+  };
+}
+
+/* ═══════════════════════════════════════════ LOAD */
+function loadDemo(){setData(DEMO.map((r,i)=>norm(r,i)));}
+
+function loadFile(e){
+  const f=e.target.files[0];if(!f)return;
+  document.getElementById('loader').classList.add('on');
+  const rd=new FileReader();
+  rd.onload=ev=>{
+    try{
+      const wb=XLSX.read(ev.target.result,{type:'array',cellDates:true});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const rows=XLSX.utils.sheet_to_json(ws,{defval:''});
+      setData(rows.map((r,i)=>norm(r,i)));
+    }catch(er){alert('Error al leer el archivo: '+er.message);}
+    document.getElementById('loader').classList.remove('on');
+    e.target.value='';
+  };
+  rd.readAsArrayBuffer(f);
+}
+
+function setData(data){
+  RAW=data;
+  populateDropdowns();
+  applyF();
+  document.getElementById('emptyState').style.display='none';
+  document.getElementById('dash').style.display='block';
+  document.getElementById('hdrMeta').style.display='block';
+  document.getElementById('hdrRec').textContent=RAW.length.toLocaleString('es-CO');
+}
+
+/* ═══════════════════════════════════════════ DROPDOWNS */
+function populateDropdowns(){
+  const fillSel=(id,vals,allLabel)=>{
+    const s=document.getElementById(id);
+    const c=s.value;
+    s.innerHTML=`<option value="">${allLabel}</option>`;
+    [...new Set(vals)].filter(Boolean).sort().forEach(v=>{
+      const o=document.createElement('option');
+      o.value=o.textContent=v;s.appendChild(o);
+    });
+    // keep previous value if still valid
+    if([...s.options].some(o=>o.value===c)) s.value=c;
+  };
+  fillSel('fDpto',RAW.map(r=>r.departamento),'Todos');
+  fillSel('fCamara',RAW.map(r=>r.camara_comercio),'Todas');
+  updateCiudades(); // populate cities based on current dpto
+}
+
+function updateCiudades(){
+  const dpto=document.getElementById('fDpto').value;
+  const base=dpto?RAW.filter(r=>r.departamento===dpto):RAW;
+  const s=document.getElementById('fCiudad');
+  const prev=s.value;
+  s.innerHTML='<option value="">Todas</option>';
+  [...new Set(base.map(r=>r.ciudad))].filter(Boolean).sort().forEach(v=>{
+    const o=document.createElement('option');
+    o.value=o.textContent=v;s.appendChild(o);
+  });
+  // restore previous city only if it belongs to new dpto
+  if([...s.options].some(o=>o.value===prev)) s.value=prev;
+  else s.value='';
+}
+
+function onDptoChange(){
+  updateCiudades();
+  applyF();
+}
+
+/* ═══════════════════════════════════════════ FILTERS */
+function applyF(){
+  const dpto=v('fDpto'),ciudad=v('fCiudad'),estado=v('fEstado'),
+        prio=v('fPrio'),camara=v('fCamara'),
+        srch=document.getElementById('fSearch').value.toLowerCase();
+  FLT=RAW.filter(r=>{
+    if(dpto&&r.departamento!==dpto)return false;
+    if(ciudad&&r.ciudad!==ciudad)return false;
+    if(estado&&r.estado_matricula!==estado)return false;
+    if(prio&&r.prio!==prio)return false;
+    if(camara&&r.camara_comercio!==camara)return false;
+    if(srch&&!r.razon_social.toLowerCase().includes(srch)&&!r.nit.includes(srch))return false;
+    return true;
+  });
+  FLT.sort((a,b)=>{
+    let va=a[sortK],vb=b[sortK];
+    if(typeof va==='string'){va=va.toLowerCase();vb=vb.toLowerCase();}
+    return sortA?(va>vb?1:-1):(va<vb?1:-1);
+  });
+  page=1;
+  render();
+}
+function v(id){return document.getElementById(id).value;}
+function resetF(){
+  ['fDpto','fEstado','fPrio','fCamara'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('fSearch').value='';
+  updateCiudades(); // repopulate all cities, then clear city too
+  document.getElementById('fCiudad').value='';
+  applyF();
+}
+
+/* ═══════════════════════════════════════════ RENDER ALL */
+function render(){renderKPI();renderMap();renderRank();renderCharts();renderTable();}
+
+/* ═══════════════════════════════════════════ KPI */
+function renderKPI(){
+  const d=FLT,n=d.length||1;
+  const activas=d.filter(r=>r.estado_matricula==='ACTIVA').length;
+  const pA=d.filter(r=>r.prio==='A').length;
+  const avg=d.length?Math.round(d.reduce((s,r)=>s+r.score,0)/d.length):0;
+  const dptos=new Set(d.map(r=>r.departamento)).size;
+  const ciudades=new Set(d.map(r=>r.ciudad)).size;
+  const ren90=d.filter(r=>r.dias_renovacion>=0&&r.dias_renovacion<=90).length;
+  const ren365=d.filter(r=>r.dias_renovacion>=0&&r.dias_renovacion<=365).length;
+
+  document.getElementById('kpiGrid').innerHTML=[
+    {ico:'🏢',lbl:'Total Empresas',val:d.length.toLocaleString('es-CO'),sub:`${ciudades} ciudades · ${dptos} dptos`,hi:false,badge:null},
+    {ico:'✅',lbl:'Matrículas Activas',val:activas.toLocaleString('es-CO'),sub:`${Math.round(activas/n*100)}% del total filtrado`,hi:false,badge:null},
+    {ico:'🎯',lbl:'Prioridad Alta (A)',val:pA.toLocaleString('es-CO'),sub:'Score ≥ 70 puntos',hi:true,badge:'CRÍTICO'},
+    {ico:'📈',lbl:'Score Promedio',val:avg,sub:`Máx. teórico 100 pts`,hi:false,badge:null},
+    {ico:'🔔',lbl:'Renovación ≤ 90 días',val:ren90.toLocaleString('es-CO'),sub:'Ventana crítica de contacto',hi:false,badge:null},
+    {ico:'📅',lbl:'Renovación ≤ 365 días',val:ren365.toLocaleString('es-CO'),sub:'Pipeline anual',hi:false,badge:null},
+  ].map(k=>`
+    <div class="kpi ${k.hi?'hi':''}">
+      ${k.badge?`<div class="kpi-badge">${k.badge}</div>`:''}
+      <div class="kpi-icon">${k.ico}</div>
+      <div class="kpi-lbl">${k.lbl}</div>
+      <div class="kpi-val">${k.val}</div>
+      <div class="kpi-sub">${k.sub}</div>
+    </div>`).join('');
+}
+
+/* ═══════════════════════════════════════════ MAP */
+function renderMap(){
+  if(!mapInst){
+    mapInst=L.map('map',{zoomControl:true}).setView([5.5,-74.5],6);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{
+      attribution:'© OpenStreetMap © CARTO',maxZoom:18
+    }).addTo(mapInst);
+    mLayer=L.layerGroup().addTo(mapInst);
+  }
+  mLayer.clearLayers();
+
+  // Aggregate by city
+  const cm={};
+  FLT.forEach(r=>{
+    if(!r.lat||!r.lng)return;
+    const k=`${r.ciudad}|${r.lat.toFixed(4)}|${r.lng.toFixed(4)}`;
+    if(!cm[k])cm[k]={city:r.ciudad,dept:r.departamento,lat:r.lat,lng:r.lng,cnt:0,sSum:0,pA:0,pB:0,pC:0};
+    cm[k].cnt++;cm[k].sSum+=r.score;
+    cm[k]['p'+r.prio]++;
+  });
+  const cities=Object.values(cm);
+  const maxCnt=Math.max(...cities.map(c=>c.cnt),1);
+
+  cities.forEach(c=>{
+    const avg=Math.round(c.sSum/c.cnt);
+    const col=avg>=70?'#C4D600':avg>=40?'#F59E0B':'#EF4444';
+    const rad=10+(c.cnt/maxCnt)*18;
+    const m=L.circleMarker([c.lat,c.lng],{
+      radius:rad,fillColor:col,color:'#071D49',
+      weight:1.5,fillOpacity:0.88
+    });
+    m.bindPopup(`<div class="pop">
+      <div class="pop-city">${c.city}</div>
+      <div class="pop-dept">${c.dept}</div>
+      <div class="pop-grid">
+        <div class="pop-kv"><span class="pop-k">Empresas</span><br><span class="pop-v">${c.cnt}</span></div>
+        <div class="pop-kv"><span class="pop-k">Prio. A</span><br><span class="pop-v" style="color:#166534;">${c.pA}</span></div>
+        <div class="pop-kv"><span class="pop-k">Prio. B</span><br><span class="pop-v" style="color:#92400E;">${c.pB}</span></div>
+        <div class="pop-kv"><span class="pop-k">Prio. C</span><br><span class="pop-v" style="color:#991B1B;">${c.pC}</span></div>
+      </div>
+      <div class="pop-score">
+        <span class="pop-sl">Score promedio</span>
+        <span class="pop-sv">${avg}</span>
+      </div>
+    </div>`);
+    mLayer.addLayer(m);
+  });
+
+  document.getElementById('mapPill').textContent=`${cities.length} ciudades`;
+  setTimeout(()=>{try{mapInst.invalidateSize();}catch(e){}},100);
+}
+
+/* ═══════════════════════════════════════════ RANKING */
+function renderRank(){
+  const cm={};
+  FLT.forEach(r=>{
+    if(!cm[r.ciudad])cm[r.ciudad]={city:r.ciudad,dept:r.departamento,scores:[],cnt:0};
+    cm[r.ciudad].scores.push(r.score);cm[r.ciudad].cnt++;
+  });
+  const sorted=Object.values(cm)
+    .map(c=>({...c,avg:Math.round(c.scores.reduce((a,b)=>a+b,0)/c.scores.length)}))
+    .sort((a,b)=>b.avg-a.avg).slice(0,15);
+  const max=sorted.length?sorted[0].avg:100;
+
+  document.getElementById('rankPanel').innerHTML=sorted.map((c,i)=>`
+    <div class="rank-row ${i<3?'gold':''}">
+      <div class="rank-n">${i+1}</div>
+      <div class="rank-inf">
+        <div class="rank-city">${c.city||'—'}</div>
+        <div class="rank-dept">${c.dept} · ${c.cnt} empresa${c.cnt>1?'s':''}</div>
+      </div>
+      <div class="rank-right">
+        <div class="rank-sc">${c.avg}</div>
+        <div class="rank-bar-track"><div class="rank-bar-fill" style="width:${Math.round(c.avg/max*100)}%"></div></div>
+      </div>
+    </div>`).join('')||'<div style="padding:30px;text-align:center;color:var(--muted);font-size:13px;">Sin datos</div>';
+}
+
+/* ═══════════════════════════════════════════ CHARTS */
+function renderCharts(){
+  const d=FLT, n=d.length||1;
+
+  // Chart 1: Score por Departamento
+  const dp={};
+  d.forEach(r=>{if(!dp[r.departamento])dp[r.departamento]=[];dp[r.departamento].push(r.score);});
+  const dpArr=Object.entries(dp)
+    .map(([k,v])=>({lbl:k||'—',val:Math.round(v.reduce((a,b)=>a+b,0)/v.length)}))
+    .sort((a,b)=>b.val-a.val).slice(0,8);
+  const mx=dpArr.length?dpArr[0].val:100;
+  document.getElementById('chDpto').innerHTML=dpArr.map(x=>`
+    <div class="b-row">
+      <div class="b-lbl" title="${x.lbl}">${x.lbl}</div>
+      <div class="b-track"><div class="b-fill lime" style="width:${Math.round(x.val/mx*100)}%"></div></div>
+      <div class="b-val">${x.val}</div>
+    </div>`).join('')||'<div style="color:var(--muted);font-size:13px;padding:10px;">Sin datos</div>';
+
+  // Chart 2: Prioridad
+  const pMap={A:{col:'#C4D600',txt:'Prioridad Alta',desc:'Score ≥ 70'},B:{col:'#F59E0B',txt:'Prioridad Media',desc:'Score 40–69'},C:{col:'#EF4444',txt:'Prioridad Baja',desc:'Score < 40'}};
+  const pCnt={A:d.filter(r=>r.prio==='A').length,B:d.filter(r=>r.prio==='B').length,C:d.filter(r=>r.prio==='C').length};
+  const pMax=Math.max(...Object.values(pCnt),1);
+  document.getElementById('chPrio').innerHTML=Object.entries(pMap).map(([k,pm])=>`
+    <div class="pri-row">
+      <div class="pri-label pf pf${k}">${k}</div>
+      <div class="pri-track">
+        <div class="pri-fill" style="background:${pm.col};width:${Math.round(pCnt[k]/pMax*100)}%;">
+          <span class="pri-fill-val">${pCnt[k]}</span>
+        </div>
+      </div>
+      <div class="pri-cnt">${Math.round(pCnt[k]/n*100)}%</div>
+    </div>
+    <div style="font-size:10.5px;color:var(--muted);margin:-6px 0 10px 26px;">${pm.txt} · ${pm.desc}</div>
+  `).join('');
+}
+
+/* ═══════════════════════════════════════════ TABLE */
+const COLS=[
+  {k:'score',l:'Score'},{k:'prio',l:'Prio.'},
+  {k:'razon_social',l:'Razón Social'},{k:'nit',l:'NIT'},
+  {k:'ciudad',l:'Ciudad'},{k:'departamento',l:'Departamento'},
+  {k:'camara_comercio',l:'Cámara Comercio'},
+  {k:'estado_matricula',l:'Estado'},
+  {k:'antiguedad_anos',l:'Antigüedad'},
+  {k:'num_fuentes',l:'Fuentes'},
+  {k:'fecha_renovacion',l:'Renovación'},
+  {k:'representante_legal',l:'Representante'},
+  {k:'formatted_address',l:'Dirección'},
+];
+
+function renderTable(){
+  document.getElementById('thead').innerHTML=`<tr>${COLS.map(c=>`
+    <th class="${sortK===c.k?'sorted':''}" onclick="setSort('${c.k}')">
+      ${c.l}${sortK===c.k?(sortA?' ↑':' ↓'):''}
+    </th>`).join('')}</tr>`;
+
+  const total=FLT.length;
+  const pages=Math.ceil(total/PG);
+  const s=(page-1)*PG;
+  const rows=FLT.slice(s,s+PG);
+
+  document.getElementById('tbody').innerHTML=rows.map(r=>{
+    const sc=r.score>=70?'sca':r.score>=40?'scb':'scc';
+    const est=r.estado_matricula==='ACTIVA'?'ba':r.estado_matricula==='INACTIVA'?'bi':'bp';
+    const prioC=r.prio==='A'?'pfa':r.prio==='B'?'pfb':'pfc';
+    const fren=r.fecha_renovacion?r.fecha_renovacion.toLocaleDateString('es-CO'):'—';
+    const ant=r.antiguedad_anos>0?`${r.antiguedad_anos.toFixed(1)} años`:'—';
+    return`<tr>
+      <td><span class="sc-chip ${sc}">${r.score}</span></td>
+      <td><span class="pf ${prioC}">● ${r.prio}</span></td>
+      <td style="font-weight:500;max-width:240px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${r.razon_social}">${r.razon_social||'—'}</td>
+      <td style="font-size:11.5px;color:var(--muted);">${r.nit||'—'}</td>
+      <td>${r.ciudad||'—'}</td>
+      <td>${r.departamento||'—'}</td>
+      <td style="font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:150px;" title="${r.camara_comercio}">${r.camara_comercio||'—'}</td>
+      <td><span class="badge ${est}">${r.estado_matricula||'N/D'}</span></td>
+      <td>${ant}</td>
+      <td style="text-align:center;">${r.num_fuentes||0}</td>
+      <td style="font-size:11.5px;white-space:nowrap;">${fren}</td>
+      <td style="font-size:11.5px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${r.representante_legal}">${r.representante_legal||'—'}</td>
+      <td style="font-size:11.5px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted);" title="${r.formatted_address}">${r.formatted_address||'—'}</td>
+    </tr>`;
+  }).join('')||`<tr><td colspan="${COLS.length}" style="text-align:center;padding:40px;color:var(--muted);">Sin resultados con los filtros actuales</td></tr>`;
+
+  document.getElementById('tblInfo').textContent=`Mostrando ${s+1}–${Math.min(s+PG,total)} de ${total.toLocaleString('es-CO')} registros`;
+  renderPag(pages);
+}
+
+function setSort(k){
+  if(sortK===k)sortA=!sortA; else{sortK=k;sortA=false;}
+  applyF();
+}
+
+function renderPag(pages){
+  let h='';
+  const btn=(p,lbl,on)=>`<div class="pg-btn ${on?'on':''}" onclick="goPage(${p})">${lbl||p}</div>`;
+  h+=btn(Math.max(1,page-1),'‹');
+  if(pages<=7){for(let i=1;i<=pages;i++)h+=btn(i,i,i===page);}
+  else{
+    h+=btn(1,1,page===1);
+    if(page>3)h+=`<div class="pg-btn" style="cursor:default;border:none;background:transparent;">…</div>`;
+    for(let i=Math.max(2,page-1);i<=Math.min(pages-1,page+1);i++)h+=btn(i,i,i===page);
+    if(page<pages-2)h+=`<div class="pg-btn" style="cursor:default;border:none;background:transparent;">…</div>`;
+    h+=btn(pages,pages,page===pages);
+  }
+  h+=btn(Math.min(pages,page+1),'›');
+  document.getElementById('pg').innerHTML=h;
+}
+
+function goPage(p){page=p;renderTable();}
+
+/* ═══════════════════════════════════════════ EXPORT */
+function exportData(){
+  if(!FLT.length){alert('No hay datos para exportar.');return;}
+  const rows=FLT.map(r=>({
+    Score:r.score,Prioridad:r.prio,
+    Razon_Social:r.razon_social,NIT:r.nit,
+    Ciudad:r.ciudad,Departamento:r.departamento,
+    Camara_Comercio:r.camara_comercio,
+    Estado_Matricula:r.estado_matricula,
+    Antiguedad_Anos:r.antiguedad_anos.toFixed(1),
+    Num_Fuentes:r.num_fuentes,
+    Dias_Para_Renovacion:r.dias_renovacion,
+    Fecha_Renovacion:r.fecha_renovacion?r.fecha_renovacion.toLocaleDateString('es-CO'):'',
+    Representante_Legal:r.representante_legal,
+    Telefono:r.telefono,Email:r.email
+  }));
+  const ws=XLSX.utils.json_to_sheet(rows);
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'Territorios');
+  XLSX.writeFile(wb,`Territorios_Estrategicos_${new Date().toISOString().slice(0,10)}.xlsx`);
+}
+</script>
+</body>
+</html>
