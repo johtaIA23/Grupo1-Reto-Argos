@@ -402,8 +402,27 @@ tbody td{padding:9px 13px;font-size:12.5px;}
   box-shadow:0 8px 32px rgba(7,29,73,.2)!important;
   border:1px solid var(--border);padding:0!important;
 }
-.leaflet-popup-content{margin:0!important;}
+.leaflet-popup-content{margin:0!important;overflow:hidden;border-radius:10px;}
+.leaflet-popup-tip-container{margin-top:-1px;}
 .pop{padding:14px 16px;min-width:180px;}
+
+/* Hover tooltip empresa */
+.tip-empresa{
+  background:var(--white)!important;
+  border:1.5px solid var(--navy)!important;
+  border-radius:8px!important;
+  box-shadow:0 4px 16px rgba(7,29,73,0.18)!important;
+  padding:8px 12px!important;
+  max-width:220px!important;
+  white-space:nowrap!important;
+}
+.tip-empresa .leaflet-tooltip-content{
+  max-width:200px;
+  overflow:hidden;
+}
+.tip-empresa::before{
+  border-top-color:var(--navy)!important;
+}
 .pop-city{font-weight:700;font-size:14px;color:var(--navy);margin-bottom:2px;}
 .pop-dept{font-size:11px;color:var(--muted);margin-bottom:10px;}
 .pop-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px 10px;}
@@ -799,18 +818,20 @@ function renderMap(){
   }
   mLayer.clearLayers();
 
-  // Aggregate by city
+  // ── Aggregate cities for cluster bubbles ──
   const cm={};
   FLT.forEach(r=>{
     if(!r.lat||!r.lng)return;
     const k=`${r.ciudad}|${r.lat.toFixed(4)}|${r.lng.toFixed(4)}`;
-    if(!cm[k])cm[k]={city:r.ciudad,dept:r.departamento,lat:r.lat,lng:r.lng,cnt:0,sSum:0,pA:0,pB:0,pC:0};
+    if(!cm[k])cm[k]={city:r.ciudad,dept:r.departamento,lat:r.lat,lng:r.lng,cnt:0,sSum:0,pA:0,pB:0,pC:0,companies:[]};
     cm[k].cnt++;cm[k].sSum+=r.score;
     cm[k]['p'+r.prio]++;
+    cm[k].companies.push(r);
   });
   const cities=Object.values(cm);
   const maxCnt=Math.max(...cities.map(c=>c.cnt),1);
 
+  // ── City bubble markers ──
   cities.forEach(c=>{
     const avg=Math.round(c.sSum/c.cnt);
     const col=avg>=70?'#C4D600':avg>=40?'#F59E0B':'#EF4444';
@@ -819,24 +840,90 @@ function renderMap(){
       radius:rad,fillColor:col,color:'#071D49',
       weight:1.5,fillOpacity:0.88
     });
-    m.bindPopup(`<div class="pop">
+
+    // Build company list rows for popup
+    const compRows=c.companies.map(r=>{
+      const sc=r.score>=70?'#166534':r.score>=40?'#92400E':'#991B1B';
+      const bg=r.score>=70?'#dcfce7':r.score>=40?'#fef9c3':'#fee2e2';
+      const addr=r.formatted_address||r.ciudad||'—';
+      return `<div style="padding:8px 0;border-bottom:1px solid #eef0f6;display:flex;gap:10px;align-items:flex-start;">
+        <div style="flex-shrink:0;margin-top:2px;">
+          <span style="display:inline-flex;align-items:center;justify-content:center;min-width:32px;height:18px;border-radius:4px;background:${bg};color:${sc};font-size:10px;font-weight:800;padding:0 5px;">${r.score}</span>
+        </div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-weight:700;font-size:12px;color:#071D49;line-height:1.3;margin-bottom:2px;">${r.razon_social||'—'}</div>
+          <div style="font-size:10.5px;color:#5B7089;line-height:1.4;">${addr}</div>
+        </div>
+      </div>`;
+    }).join('');
+
+    m.bindPopup(`<div class="pop" style="min-width:280px;max-width:340px;">
       <div class="pop-city">${c.city}</div>
       <div class="pop-dept">${c.dept}</div>
-      <div class="pop-grid">
+      <div class="pop-grid" style="margin-bottom:8px;">
         <div class="pop-kv"><span class="pop-k">Empresas</span><br><span class="pop-v">${c.cnt}</span></div>
         <div class="pop-kv"><span class="pop-k">Prio. A</span><br><span class="pop-v" style="color:#166534;">${c.pA}</span></div>
         <div class="pop-kv"><span class="pop-k">Prio. B</span><br><span class="pop-v" style="color:#92400E;">${c.pB}</span></div>
         <div class="pop-kv"><span class="pop-k">Prio. C</span><br><span class="pop-v" style="color:#991B1B;">${c.pC}</span></div>
       </div>
-      <div class="pop-score">
+      <div class="pop-score" style="margin-bottom:10px;">
         <span class="pop-sl">Score promedio</span>
         <span class="pop-sv">${avg}</span>
       </div>
-    </div>`);
+      <div style="font-size:9.5px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:#5B7089;margin-bottom:6px;">Empresas en este territorio</div>
+      <div style="max-height:220px;overflow-y:auto;margin:0 -4px;padding:0 4px;">
+        ${compRows}
+      </div>
+    </div>`,{maxWidth:360});
     mLayer.addLayer(m);
   });
 
-  document.getElementById('mapPill').textContent=`${cities.length} ciudades`;
+  // ── Individual company markers — tooltip on hover, popup on click ──
+  const withCoords=FLT.filter(r=>r.lat&&r.lng);
+  withCoords.forEach(r=>{
+    const col=r.score>=70?'#C4D600':r.score>=40?'#F59E0B':'#EF4444';
+    const addr=r.formatted_address||r.ciudad||'Sin dirección';
+    const shortAddr=addr.length>55?addr.substring(0,53)+'…':addr;
+
+    const dot=L.circleMarker([r.lat,r.lng],{
+      radius:6,
+      fillColor:col,
+      color:'#071D49',
+      weight:1.5,
+      fillOpacity:1,
+      zIndexOffset:200
+    });
+
+    // Hover tooltip: nombre + dirección
+    dot.bindTooltip(`
+      <div style="font-family:'Outfit',sans-serif;padding:2px 2px;max-width:200px;">
+        <div style="font-weight:800;font-size:11px;color:#071D49;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:196px;">${r.razon_social||'—'}</div>
+        <div style="font-size:10px;color:#5B7089;max-width:196px;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${shortAddr}</div>
+      </div>`,
+      {permanent:false,direction:'top',offset:[0,-8],className:'tip-empresa'}
+    );
+
+    // Click popup: ficha completa
+    dot.bindPopup(`<div class="pop" style="min-width:240px;">
+      <div class="pop-city">${r.razon_social}</div>
+      <div class="pop-dept">${r.ciudad} · ${r.departamento}</div>
+      <div style="margin:8px 0;font-size:11px;color:#5B7089;line-height:1.5;">${r.formatted_address||'Sin dirección registrada'}</div>
+      <div class="pop-grid">
+        <div class="pop-kv"><span class="pop-k">NIT</span><br><span class="pop-v" style="font-size:12px;">${r.nit||'—'}</span></div>
+        <div class="pop-kv"><span class="pop-k">Estado</span><br><span class="pop-v" style="font-size:12px;">${r.estado_matricula||'—'}</span></div>
+        <div class="pop-kv"><span class="pop-k">Antigüedad</span><br><span class="pop-v" style="font-size:12px;">${r.antiguedad_anos>0?r.antiguedad_anos.toFixed(1)+' años':'—'}</span></div>
+        <div class="pop-kv"><span class="pop-k">Teléfono</span><br><span class="pop-v" style="font-size:12px;">${r.telefono||'—'}</span></div>
+      </div>
+      <div class="pop-score">
+        <span class="pop-sl">Score · Prioridad <strong>${r.prio}</strong></span>
+        <span class="pop-sv">${r.score}</span>
+      </div>
+    </div>`,{maxWidth:300});
+
+    mLayer.addLayer(dot);
+  });
+
+  document.getElementById('mapPill').textContent=`${cities.length} ciudades · ${withCoords.length} empresas`;
   setTimeout(()=>{try{mapInst.invalidateSize();}catch(e){}},100);
 }
 
