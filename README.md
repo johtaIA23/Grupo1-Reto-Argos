@@ -494,11 +494,5 @@ Sí. Comparta el archivo `RTM_Road_To_Market.html` y cada usuario lo abre en su 
 
 ---
 
-## Contacto y soporte
-
-Para reportar errores, solicitar funcionalidades adicionales o consultas sobre la interpretación del Score y los indicadores, contacte al equipo de inteligencia comercial o al administrador técnico de la herramienta.
-
----
-
 *Manual de Usuario · Dashboard RTM_Road_To_Market v1.0 · `RTM_Road_To_Market.html`*
 *Inteligencia Comercial · Fuerza de Ventas · Materiales de Construcción*
