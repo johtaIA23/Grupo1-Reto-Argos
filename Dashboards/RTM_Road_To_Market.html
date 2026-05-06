@@ -534,11 +534,19 @@ tbody td{padding:9px 13px;font-size:12.5px;}
         </select>
       </div>
       <div class="fg">
+        <span class="fg-lbl">Sector CIIU</span>
+        <select id="fSector" onchange="applyF()">
+          <option value="">Todos</option>
+          <option value="Construcción">Construcción</option>
+          <option value="Comercio">Comercio</option>
+        </select>
+      </div>
+      <div class="fg">
         <span class="fg-lbl">Buscar Razón Social / NIT</span>
         <input type="text" id="fSearch" placeholder="Escriba para buscar…" oninput="applyF()"/>
       </div>
       <button class="btn btn-outline" onclick="resetF()">✕ Limpiar</button>
-      <button class="btn btn-export" onclick="exportData()">⬇ Exportar</button>
+      
     </div>
 
     <!-- MAP + RANKING -->
@@ -591,9 +599,11 @@ tbody td{padding:9px 13px;font-size:12.5px;}
         <div class="tbl-info" id="tblInfo"></div>
         <div style="display:flex;gap:14px;align-items:center;">
           <div style="display:flex;gap:6px;font-size:10.5px;align-items:center;">
+            <button class="btn btn-export" onclick="exportData()">⬇ Exportar</button>
             <span class="sc-chip sca" style="min-width:auto;padding:0 7px;height:18px;font-size:10px;">≥70</span>Alta
             <span class="sc-chip scb" style="min-width:auto;padding:0 7px;height:18px;font-size:10px;">40–69</span>Media
             <span class="sc-chip scc" style="min-width:auto;padding:0 7px;height:18px;font-size:10px;">&lt;40</span>Baja
+            
           </div>
           <div class="pg" id="pg"></div>
         </div>
@@ -629,6 +639,14 @@ function calcScore(d){
   const a=d.antiguedad_anos>=10?40:d.antiguedad_anos>=5?30:d.antiguedad_anos>=2?15:5;
   const f=(d.num_fuentes/3)*25;
   return Math.round(r+a+f);
+}
+
+/* ═══════════════════════════════════════════ SECTOR */
+function getSector(ciiu){
+  const code=parseInt(String(ciiu||'').trim());
+  if([4111,4112,4210,4220,4290].includes(code)) return 'Construcción';
+  if([4663,4752].includes(code)) return 'Comercio';
+  return 'Otro';
 }
 
 /* ═══════════════════════════════════════════ NORMALIZE */
@@ -673,7 +691,8 @@ function norm(r,i){
     dias_renovacion:diasR,
     antiguedad_anos:anosA,
     formatted_address:String(r.formatted_address||r.direccion||'').trim(),
-    score,prio
+    score,prio,
+    sector: getSector(r.CIIU||r.ciiu||r.Ciiu||r['CIIU ']||'')
   };
 }
 
@@ -748,7 +767,7 @@ function onDptoChange(){
 /* ═══════════════════════════════════════════ FILTERS */
 function applyF(){
   const dpto=v('fDpto'),ciudad=v('fCiudad'),estado=v('fEstado'),
-        prio=v('fPrio'),camara=v('fCamara'),
+        prio=v('fPrio'),camara=v('fCamara'),sector=v('fSector'),
         srch=document.getElementById('fSearch').value.toLowerCase();
   FLT=RAW.filter(r=>{
     if(dpto&&r.departamento!==dpto)return false;
@@ -756,6 +775,7 @@ function applyF(){
     if(estado&&r.estado_matricula!==estado)return false;
     if(prio&&r.prio!==prio)return false;
     if(camara&&r.camara_comercio!==camara)return false;
+    if(sector&&r.sector!==sector)return false;
     if(srch&&!r.razon_social.toLowerCase().includes(srch)&&!r.nit.includes(srch))return false;
     return true;
   });
@@ -769,7 +789,7 @@ function applyF(){
 }
 function v(id){return document.getElementById(id).value;}
 function resetF(){
-  ['fDpto','fEstado','fPrio','fCamara'].forEach(id=>document.getElementById(id).value='');
+  ['fDpto','fEstado','fPrio','fCamara','fSector'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('fSearch').value='';
   updateCiudades(); // repopulate all cities, then clear city too
   document.getElementById('fCiudad').value='';
