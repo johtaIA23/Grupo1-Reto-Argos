@@ -50,6 +50,17 @@ async def dashboard_css():
     return Response(content=css, media_type="text/css")
 
 
+_RTM_FILE = Path("/app/dashboards/RTM_Road_To_Market.html")
+
+
+@router.get("/rtm", response_class=HTMLResponse, include_in_schema=False)
+async def rtm():
+    """Sirve el dashboard RTM Road To Market (localhost:8000/rtm)."""
+    if not _RTM_FILE.exists():
+        return HTMLResponse("<h2>RTM no encontrado en /app/dashboards/</h2>", status_code=404)
+    return HTMLResponse(content=_RTM_FILE.read_text(encoding="utf-8"))
+
+
 @router.get("/", response_class=HTMLResponse, include_in_schema=False)
 @router.get("/dashboard", response_class=HTMLResponse, include_in_schema=False)
 async def dashboard():

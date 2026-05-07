@@ -17,7 +17,10 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
 from app.models import HealthResponse
-from app.routers import csv_processor, estadisticas, dashboard, sin_ubicacion
+from app.routers import (
+    csv_processor, estadisticas, dashboard, sin_ubicacion, enriquecimiento,
+    limpieza_ia, comparar_archivo, sheets_export, datos_colombia,
+)
 
 
 # ---------------------------------------------------------------------------
@@ -63,6 +66,11 @@ app.include_router(dashboard.router)   # debe ir primero: maneja GET /
 app.include_router(csv_processor.router)
 app.include_router(estadisticas.router)
 app.include_router(sin_ubicacion.router)
+app.include_router(enriquecimiento.router)
+app.include_router(limpieza_ia.router)
+app.include_router(comparar_archivo.router)
+app.include_router(sheets_export.router)
+app.include_router(datos_colombia.router)
 
 
 # ---------------------------------------------------------------------------

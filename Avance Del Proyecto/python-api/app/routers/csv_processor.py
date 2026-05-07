@@ -4,9 +4,12 @@ Carga el CSV de ferreterías, lo limpia, clasifica y sirve en páginas.
 El DataFrame se cachea en memoria: se lee UNA sola vez del disco.
 """
 
+import csv as _csv
+
 import numpy as np
 import pandas as pd
 from fastapi import APIRouter, HTTPException
+from fastapi.responses import Response
 from pydantic import BaseModel
 from app.config import settings
 from app.models import (
@@ -47,9 +50,25 @@ def _cargar_y_limpiar_csv() -> pd.DataFrame:
     Retorna un DataFrame limpio y listo para servir.
     """
     try:
+        # Auto-detectar encoding y separador
+        _enc = "utf-8-sig"
+        try:
+            with open(settings.csv_path, "r", encoding="utf-8-sig") as _f:
+                _sample = _f.read(4096)
+        except UnicodeDecodeError:
+            _enc = "latin-1"
+            with open(settings.csv_path, "r", encoding="latin-1") as _f:
+                _sample = _f.read(4096)
+        try:
+            _dialect = _csv.Sniffer().sniff(_sample, delimiters=",;\t|")
+            _sep = _dialect.delimiter
+        except _csv.Error:
+            _sep = ","
+
         df = pd.read_csv(
             settings.csv_path,
-            encoding="utf-8-sig",    # maneja BOM (﻿) que tienen muchos CSV de Windows
+            encoding=_enc,
+            sep=_sep,
             dtype=str,               # todo como texto, evita conversiones automáticas
             keep_default_na=False,   # las celdas vacías quedan como "" no NaN
             na_values=["NULL", "null", "0000-00-00", "N/A", "n/a"],
@@ -311,3 +330,131 @@ async def reload_csv():
         "total_registros": len(df),
         "csv_path":        settings.csv_path,
     }
+
+
+@router.get("/export-rtm")
+async def export_rtm():
+    """
+    Exporta el CSV en formato JSON compatible con el dashboard RTM.
+    Devuelve todos los registros con los campos que necesita el RTM.
+    """
+    df = get_dataframe().copy()
+
+    # Detectar columna de probabilidad
+    prob_col = next(
+        (c for c in df.columns if "probabilidad" in c.lower() and "cemento" in c.lower()),
+        next((c for c in df.columns if "probabilidad" in c.lower()), None),
+    )
+    if prob_col and prob_col != "probabilidad_cemento":
+        df["probabilidad_cemento"] = df[prob_col]
+
+    # Campos que necesita el RTM (en orden)
+    campos = [
+        "camara_comercio", "razon_social", "nit", "estado_matricula",
+        "fecha_matricula", "fecha_renovacion", "representante_legal",
+        "ciudad", "departamento", "telefono", "email",
+        "lat", "lng", "estado_info", "estado_legal", "estado_actividad",
+        "num_fuentes", "formatted_address", "probabilidad_cemento",
+    ]
+    cols = [c for c in campos if c in df.columns]
+    result = df[cols].copy()
+    result.insert(0, "id", df.index.astype(str))
+
+    # lat/lng como float (vienen como string del CSV)
+    for col in ("lat", "lng", "num_fuentes"):
+        if col in result.columns:
+            result[col] = pd.to_numeric(result[col], errors="coerce")
+
+    # NaN → None para JSON válido
+    result = result.where(result.notna(), other=None)
+
+    json_str = result.to_json(orient="records", force_ascii=False)
+    return Response(
+        content=json_str,
+        media_type="application/json",
+        headers={"Access-Control-Allow-Origin": "*"},
+    )
+
+
+@router.get("/export-rtm-supabase")
+async def export_rtm_supabase():
+    """
+    Exporta datos desde Supabase en el formato JSON que espera el dashboard RTM.
+    Muestra los datos enriquecidos (con lat/lng, teléfono, ciudad, etc.).
+    """
+    import json as _json
+    import os
+
+    import httpx
+
+    supabase_url = os.getenv("SUPABASE_URL", settings.supabase_url)
+    supabase_key = os.getenv("SUPABASE_KEY", os.getenv("SUPABASE_SERVICE_KEY", settings.supabase_key))
+    headers = {
+        "apikey": supabase_key,
+        "Authorization": f"Bearer {supabase_key}",
+    }
+
+    select_cols = (
+        "camara_comercio,razon_social,nit,estado_matricula,fecha_matricula,"
+        "fecha_renovacion,representante_legal,ciudad,departamento,telefono,"
+        "email,lat,lng,estado_info,estado_legal,num_fuentes,probabilidad,direccion"
+    )
+
+    all_rows: list[dict] = []
+    page = 0
+    page_size = 1000
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        while True:
+            r = await client.get(
+                f"{supabase_url}/rest/v1/ferreterias",
+                headers={
+                    **headers,
+                    "Range": f"{page * page_size}-{(page + 1) * page_size - 1}",
+                    "Prefer": "count=none",
+                },
+                params={"select": select_cols, "order": "razon_social.asc"},
+            )
+            if r.status_code not in (200, 206):
+                return Response(
+                    content=_json.dumps({"error": f"Supabase {r.status_code}: {r.text[:200]}"}),
+                    media_type="application/json",
+                    status_code=502,
+                )
+            batch = r.json()
+            if not batch:
+                break
+            all_rows.extend(batch)
+            if len(batch) < page_size:
+                break
+            page += 1
+
+    result = [
+        {
+            "id": str(i),
+            "camara_comercio":     row.get("camara_comercio"),
+            "razon_social":        row.get("razon_social"),
+            "nit":                 row.get("nit"),
+            "estado_matricula":    row.get("estado_matricula"),
+            "fecha_matricula":     row.get("fecha_matricula"),
+            "fecha_renovacion":    row.get("fecha_renovacion"),
+            "representante_legal": row.get("representante_legal"),
+            "ciudad":              row.get("ciudad"),
+            "departamento":        row.get("departamento"),
+            "telefono":            row.get("telefono"),
+            "email":               row.get("email"),
+            "lat":                 row.get("lat"),
+            "lng":                 row.get("lng"),
+            "estado_info":         row.get("estado_info"),
+            "estado_legal":        row.get("estado_legal"),
+            "num_fuentes":         row.get("num_fuentes"),
+            "formatted_address":   row.get("direccion"),
+            "probabilidad_cemento": row.get("probabilidad"),
+        }
+        for i, row in enumerate(all_rows)
+    ]
+
+    return Response(
+        content=_json.dumps(result, ensure_ascii=False),
+        media_type="application/json",
+        headers={"Access-Control-Allow-Origin": "*"},
+    )

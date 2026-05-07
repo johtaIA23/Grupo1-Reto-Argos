@@ -78,10 +78,15 @@ services:
       - ./data:/data:ro
       # Hot-reload: cambios en el código Python y templates se reflejan sin rebuild
       - ./python-api/app:/app/app
+      # Dashboard RTM — solo lectura, sirve el HTML desde localhost:8000/rtm
+      - ../Dashboards:/app/dashboards:ro
     environment:
       - CSV_PATH=/data/ferreterias.csv
       - SUPABASE_URL=${SUPABASE_URL}
       - SUPABASE_KEY=${SUPABASE_SERVICE_KEY}
+      - SUPABASE_SERVICE_KEY=${SUPABASE_SERVICE_KEY}
+      - GOOGLE_MAPS_API_KEY=${GOOGLE_MAPS_API_KEY}
+      - N8N_WEBHOOK_SHEETS=${N8N_WEBHOOK_SHEETS:-http://n8n:5678/webhook/sheets-exportar}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s

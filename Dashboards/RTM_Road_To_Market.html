@@ -90,6 +90,7 @@ body{
   white-space:nowrap;
 }
 .upload-zone:hover{background:var(--lime);color:var(--navy);}
+.upload-zone:disabled{opacity:.5;cursor:not-allowed;}
 .upload-zone svg{flex-shrink:0;}
 #fileIn{display:none;}
 
@@ -450,6 +451,226 @@ tbody td{padding:9px 13px;font-size:12.5px;}
   .charts-row{grid-template-columns:1fr;}
   .hdr{padding:0 16px;}
 }
+
+/* ═══════════════════════════════ PROCESO PANEL */
+.proc-panel{
+  background:var(--white);
+  border:1px solid var(--border);
+  border-radius:var(--r);
+  box-shadow:var(--sh);
+  overflow:hidden;
+  margin-bottom:16px;
+}
+.proc-hdr{
+  background:var(--navy);
+  padding:12px 20px;
+  display:flex;align-items:center;justify-content:space-between;
+  cursor:pointer;user-select:none;
+}
+.proc-hdr-ttl{
+  display:flex;align-items:center;gap:10px;
+  font-family:'Cormorant Garamond',serif;
+  font-size:15px;font-weight:600;color:var(--white);
+}
+.proc-toggle{color:rgba(255,255,255,.5);font-size:14px;transition:.25s;line-height:1;}
+.proc-toggle.open{transform:rotate(180deg);}
+.proc-body{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(270px,1fr));
+  gap:14px;padding:16px;
+  border-top:2.5px solid var(--lime);
+}
+.proc-card{
+  border:1px solid var(--border);
+  border-radius:var(--rs);
+  padding:15px;
+  display:flex;flex-direction:column;gap:10px;
+  transition:.15s;
+}
+.proc-card:hover{border-color:var(--lime-40);box-shadow:var(--sh);}
+.proc-card-ttl{
+  display:flex;align-items:center;gap:8px;
+  font-size:13px;font-weight:700;color:var(--navy);
+}
+.proc-card-ico{
+  width:28px;height:28px;background:var(--lime-20);
+  border-radius:6px;display:flex;align-items:center;justify-content:center;
+  font-size:14px;flex-shrink:0;
+}
+.proc-card-desc{font-size:11.5px;color:var(--muted);line-height:1.55;}
+.proc-controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+.proc-input-row{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;}
+.proc-field{display:flex;flex-direction:column;gap:4px;}
+.proc-lbl{font-size:9.5px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);}
+.proc-num{
+  width:80px;padding:6px 10px;
+  border:1px solid var(--border);border-radius:var(--rs);
+  font-family:'Outfit',sans-serif;font-size:13px;color:var(--navy);
+  background:var(--white);outline:none;transition:.15s;
+}
+.proc-num:focus{border-color:var(--lime);box-shadow:0 0 0 3px var(--lime-20);}
+.proc-bar-wrap{display:flex;flex-direction:column;gap:4px;}
+.proc-bar-track{height:5px;background:var(--navy-10);border-radius:3px;overflow:hidden;}
+.proc-bar-fill{
+  height:100%;background:var(--lime);border-radius:3px;
+  width:0%;transition:width .4s ease;
+}
+.proc-bar-fill.err{background:var(--danger);}
+.proc-bar-fill.run{
+  background:linear-gradient(90deg,var(--lime) 0%,rgba(196,214,0,.4) 50%,var(--lime) 100%);
+  background-size:200% 100%;
+  animation:psh 1.4s linear infinite;
+}
+@keyframes psh{to{background-position:-200% 0;}}
+.proc-log{font-size:10.5px;color:var(--muted);line-height:1.45;min-height:15px;}
+.proc-log.ok{color:var(--success);}
+.proc-log.err{color:var(--danger);}
+.proc-log.run{color:var(--warn);}
+.proc-stats{display:flex;gap:8px;flex-wrap:wrap;}
+.ps-item{
+  display:flex;align-items:center;gap:5px;
+  font-size:10.5px;color:var(--muted);
+  background:var(--navy-10);border-radius:4px;padding:3px 8px;
+}
+.ps-val{font-weight:700;color:var(--navy);}
+
+/* ═══════════════════════════════ SECCIÓN TABS */
+.tab-row{display:flex;gap:4px;padding:0 14px;border-bottom:2px solid var(--border);}
+.tab-btn{
+  padding:9px 16px;font-family:'Outfit',sans-serif;font-size:12px;font-weight:600;
+  border:none;background:none;cursor:pointer;color:var(--muted);
+  border-bottom:2.5px solid transparent;margin-bottom:-2px;transition:.15s;
+  display:flex;align-items:center;gap:6px;
+}
+.tab-btn.on{color:var(--navy);border-bottom-color:var(--lime);}
+.tab-badge{
+  background:var(--navy-10);color:var(--navy);
+  font-size:9px;font-weight:800;padding:1px 6px;border-radius:20px;
+}
+.tab-btn.on .tab-badge{background:var(--lime);color:var(--navy);}
+.tab-content{display:none;padding:14px;}
+.tab-content.on{display:block;}
+
+/* ═══════════════════════════════ DROP ZONE */
+.drop-zone{
+  border:2px dashed var(--border);border-radius:var(--r);
+  padding:32px;text-align:center;cursor:pointer;
+  transition:.2s;color:var(--muted);font-size:13px;
+  background:var(--navy-10);
+}
+.drop-zone:hover,.drop-zone.over{border-color:var(--lime);background:var(--lime-20);}
+.drop-zone-icon{font-size:32px;margin-bottom:8px;opacity:.4;}
+.drop-zone label{cursor:pointer;color:var(--navy);font-weight:600;text-decoration:underline;}
+
+/* ═══════════════════════════════ COMP TABLE */
+.comp-tbl-wrap{overflow-x:auto;max-height:380px;overflow-y:auto;}
+.comp-tbl{width:100%;border-collapse:collapse;font-size:12px;}
+.comp-tbl thead th{
+  background:var(--navy);color:rgba(255,255,255,.7);
+  padding:8px 12px;text-align:left;font-size:9.5px;font-weight:700;
+  letter-spacing:1.2px;text-transform:uppercase;white-space:nowrap;
+  position:sticky;top:0;z-index:1;
+}
+.comp-tbl tbody tr{border-bottom:1px solid var(--border);}
+.comp-tbl tbody tr:hover{background:var(--navy-10);}
+.comp-tbl tbody td{padding:7px 12px;color:var(--navy);}
+.comp-tbl .sub{font-size:10.5px;color:var(--muted);}
+
+/* ═══════════════════════════════ CORRECCIONES IA */
+.corr-table{width:100%;border-collapse:collapse;font-size:11.5px;}
+.corr-table th{background:var(--navy);color:rgba(255,255,255,.7);padding:7px 12px;
+  text-align:left;font-size:9.5px;font-weight:700;letter-spacing:1px;text-transform:uppercase;}
+.corr-table td{padding:6px 12px;border-bottom:1px solid var(--border);}
+.corr-old{color:var(--danger);text-decoration:line-through;}
+.corr-new{color:var(--success);font-weight:600;}
+
+/* ═══════════════════════════════ BANNER ESTADO */
+.banner-estado{
+  background:var(--navy-10);border:1px solid var(--border);border-radius:var(--rs);
+  padding:12px 16px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;
+  font-size:12px;color:var(--muted);
+}
+.banner-dot{width:8px;height:8px;border-radius:50%;background:var(--muted);flex-shrink:0;}
+.banner-dot.ok{background:var(--success);}
+.banner-label{font-weight:700;color:var(--navy);margin-right:4px;}
+.banner-toggle{
+  margin-left:auto;display:flex;align-items:center;gap:8px;
+  font-size:11px;font-weight:600;color:var(--navy);cursor:pointer;
+}
+.toggle-sw{
+  width:36px;height:20px;border-radius:10px;background:var(--border);
+  position:relative;transition:.2s;cursor:pointer;flex-shrink:0;
+}
+.toggle-sw.on{background:var(--lime);}
+.toggle-sw::after{
+  content:'';position:absolute;top:3px;left:3px;
+  width:14px;height:14px;border-radius:50%;background:var(--white);
+  transition:.2s;
+}
+.toggle-sw.on::after{left:19px;}
+
+/* ═══════════════════════════════ CHATBOT FLOTANTE */
+#chatBubble{
+  position:fixed;bottom:24px;right:24px;z-index:9990;
+  width:56px;height:56px;border-radius:50%;
+  background:var(--navy);border:2.5px solid var(--lime);
+  display:flex;align-items:center;justify-content:center;
+  font-size:24px;cursor:pointer;
+  box-shadow:0 4px 20px rgba(7,29,73,.3);
+  transition:.2s;user-select:none;
+}
+#chatBubble:hover{transform:scale(1.08);box-shadow:0 8px 28px rgba(7,29,73,.4);}
+#chatPanel{
+  position:fixed;bottom:90px;right:24px;z-index:9991;
+  width:360px;height:480px;
+  background:var(--white);border:1.5px solid var(--border);
+  border-radius:var(--r);box-shadow:0 12px 48px rgba(7,29,73,.2);
+  display:flex;flex-direction:column;overflow:hidden;
+}
+#chatHdr{
+  background:var(--navy);padding:12px 16px;
+  display:flex;align-items:center;justify-content:space-between;
+  font-family:'Cormorant Garamond',serif;font-size:15px;font-weight:600;color:var(--white);
+  border-bottom:2px solid var(--lime);
+}
+#chatHdr button{
+  background:none;border:none;color:rgba(255,255,255,.5);
+  font-size:18px;cursor:pointer;padding:0;line-height:1;
+}
+#chatHdr button:hover{color:var(--lime);}
+#chatMsgs{
+  flex:1;overflow-y:auto;padding:12px;
+  display:flex;flex-direction:column;gap:8px;
+  background:var(--navy-10);
+}
+.chat-msg{
+  max-width:90%;padding:8px 12px;border-radius:10px;font-size:12.5px;line-height:1.5;
+}
+.chat-msg.user{
+  background:var(--navy);color:var(--white);
+  align-self:flex-end;border-bottom-right-radius:3px;
+}
+.chat-msg.bot{
+  background:var(--white);color:var(--navy);
+  align-self:flex-start;border-bottom-left-radius:3px;
+  border:1px solid var(--border);
+}
+.chat-msg.typing{color:var(--muted);font-style:italic;}
+#chatInputRow{
+  display:flex;gap:8px;padding:10px;
+  border-top:1px solid var(--border);background:var(--white);
+}
+#chatQ{
+  flex:1;border:1px solid var(--border);border-radius:var(--rs);
+  padding:8px 12px;font-family:'Outfit',sans-serif;font-size:13px;
+  color:var(--navy);outline:none;
+}
+#chatQ:focus{border-color:var(--lime);}
+#chatSend{
+  background:var(--navy);color:var(--lime);border:none;border-radius:var(--rs);
+  padding:8px 14px;cursor:pointer;font-size:16px;transition:.15s;
+}
+#chatSend:hover{background:#0d2d6e;}
 </style>
 </head>
 <body>
@@ -474,6 +695,10 @@ tbody td{padding:9px 13px;font-size:12.5px;}
     <div class="hdr-records" id="hdrRec">0</div>
     <div class="hdr-records-lbl">Empresas cargadas</div>
   </div>
+  <button class="upload-zone" onclick="loadFromApi()" id="btnApi">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+    Cargar desde API
+  </button>
   <button class="upload-zone" onclick="document.getElementById('fileIn').click()">
     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
     Cargar / Actualizar Excel
@@ -484,12 +709,271 @@ tbody td{padding:9px 13px;font-size:12.5px;}
 <!-- ─── MAIN ─── -->
 <div class="wrap">
 
+  <!-- ─── CENTRO DE PROCESOS ─── -->
+  <div class="proc-panel" id="procPanel">
+    <div class="proc-hdr" onclick="toggleProc()">
+      <div class="proc-hdr-ttl">
+        <div class="card-ico" style="width:24px;height:24px;font-size:13px;">⚙️</div>
+        Centro de Procesos
+        <span style="background:var(--lime);color:var(--navy);font-size:9px;font-weight:800;padding:2px 8px;border-radius:20px;letter-spacing:.5px;">MANUAL</span>
+      </div>
+      <div class="proc-toggle open" id="procToggle">▼</div>
+    </div>
+    <div class="proc-body" id="procBody">
+
+      <!-- 1. Cargar base de datos a Supabase -->
+      <div class="proc-card">
+        <div class="proc-card-ttl"><div class="proc-card-ico">🗄️</div>Cargar base de datos a Supabase</div>
+        <div class="proc-card-desc">Sube todos los registros del CSV a Supabase en lotes automáticos. Omite duplicados automáticamente.</div>
+        <div class="proc-controls">
+          <button class="btn btn-primary" style="padding:7px 16px;font-size:11.5px;" id="btnProcSB" onclick="procCargarSupabase()">▶ Cargar todo</button>
+        </div>
+        <div class="proc-bar-wrap">
+          <div class="proc-bar-track"><div class="proc-bar-fill" id="barSB"></div></div>
+          <div class="proc-log" id="logSB">Listo para ejecutar</div>
+        </div>
+        <div class="proc-stats" id="statSB"></div>
+      </div>
+
+
+      <!-- 4. Geocodificar con Nominatim -->
+      <div class="proc-card">
+        <div class="proc-card-ttl"><div class="proc-card-ico">🌍</div>Geocodificar con OpenStreetMap</div>
+        <div class="proc-card-desc">Nominatim (OpenStreetMap) — gratuito, sin API key. Agrupa por ciudad única del CSV y hace un PATCH masivo por ciudad. Procesa los 133K registros en ~5-15 minutos.</div>
+        <div class="proc-controls">
+          <button class="btn btn-primary" style="padding:7px 16px;font-size:11.5px;" id="btnProcMaps" onclick="procEnriquecerMaps()">▶ Iniciar todo</button>
+          <button class="btn btn-outline" style="padding:7px 14px;font-size:11.5px;" id="btnStopMaps" onclick="procDetenerMaps()" disabled>■ Detener</button>
+        </div>
+        <div class="proc-bar-wrap">
+          <div class="proc-bar-track"><div class="proc-bar-fill" id="barMaps"></div></div>
+          <div class="proc-log" id="logMaps">Listo para ejecutar</div>
+        </div>
+        <div class="proc-stats" id="statMaps"></div>
+      </div>
+
+
+      <!-- 5. Scraping Portafolio.co -->
+      <div class="proc-card">
+        <div class="proc-card-ttl"><div class="proc-card-ico">📞</div>Teléfonos desde Portafolio.co</div>
+        <div class="proc-card-desc">Busca cada empresa en <strong>empresas.portafolio.co</strong> y extrae el teléfono registrado. Por defecto solo procesa las que aún no tienen teléfono.</div>
+        <div class="proc-input-row">
+          <div class="proc-field">
+            <span class="proc-lbl">Límite</span>
+            <input type="number" class="proc-num" id="portLimit" value="100" min="1" max="2000">
+          </div>
+          <div class="proc-field">
+            <span class="proc-lbl">Offset</span>
+            <input type="number" class="proc-num" id="portOffset" value="0" min="0">
+          </div>
+          <label style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted);cursor:pointer;padding-bottom:2px;">
+            <input type="checkbox" id="portTodos"> Incluir con teléfono
+          </label>
+        </div>
+        <div class="proc-controls">
+          <button class="btn btn-primary" style="padding:7px 16px;font-size:11.5px;" id="btnProcPort" onclick="procScrapingPortafolio()">▶ Iniciar</button>
+          <button class="btn btn-outline" style="padding:7px 14px;font-size:11.5px;" id="btnStopPort" onclick="procDetenerPortafolio()" disabled>■ Detener</button>
+        </div>
+        <div class="proc-bar-wrap">
+          <div class="proc-bar-track"><div class="proc-bar-fill" id="barPort"></div></div>
+          <div class="proc-log" id="logPort">Listo para ejecutar</div>
+        </div>
+        <div class="proc-stats" id="statPort"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ─── SECCIÓN A: LIMPIEZA IA ─── -->
+  <div class="proc-panel" id="panelLimpieza">
+    <div class="proc-hdr" onclick="togglePanel('panelLimpieza','togLimp')">
+      <div class="proc-hdr-ttl">
+        <div class="card-ico" style="width:24px;height:24px;font-size:13px;">🧹</div>
+        Limpieza IA
+        <span style="background:var(--lime);color:var(--navy);font-size:9px;font-weight:800;padding:2px 8px;border-radius:20px;letter-spacing:.5px;">IA</span>
+      </div>
+      <div class="proc-toggle open" id="togLimp">▼</div>
+    </div>
+    <div class="proc-body" id="bodyLimp" style="display:grid;">
+      <div class="proc-card" style="grid-column:1/-1;">
+        <div class="proc-card-ttl"><div class="proc-card-ico">📊</div>Métricas de Calidad</div>
+        <div class="kpi-grid" id="limpKpis" style="grid-template-columns:repeat(4,1fr);margin-bottom:0;"></div>
+      </div>
+      <div class="proc-card">
+        <div class="proc-card-ttl"><div class="proc-card-ico">🔍</div>Analizar Datos</div>
+        <div class="proc-card-desc">Consulta Supabase y calcula métricas de calidad: registros sin teléfono, sin email, sin NIT y duplicados.</div>
+        <div class="proc-controls">
+          <button class="btn btn-primary" style="padding:7px 16px;font-size:11.5px;" id="btnAnalizar" onclick="limpAnalizar()">▶ Analizar</button>
+        </div>
+        <div class="proc-bar-wrap">
+          <div class="proc-bar-track"><div class="proc-bar-fill" id="barAnal"></div></div>
+          <div class="proc-log" id="logAnal">Listo para ejecutar</div>
+        </div>
+      </div>
+      <div class="proc-card">
+        <div class="proc-card-ttl"><div class="proc-card-ico">⚡</div>Ejecutar Limpieza</div>
+        <div class="proc-card-desc">Detecta NITs duplicados y conserva el registro más reciente. Los duplicados se eliminan de Supabase.</div>
+        <div class="proc-controls">
+          <button class="btn btn-primary" style="padding:7px 16px;font-size:11.5px;" id="btnLimpiar" onclick="limpEjecutar()">⚡ Ejecutar Limpieza IA</button>
+        </div>
+        <div class="proc-bar-wrap">
+          <div class="proc-bar-track"><div class="proc-bar-fill" id="barLimp"></div></div>
+          <div class="proc-log" id="logLimp">Listo para ejecutar</div>
+        </div>
+        <div class="proc-stats" id="statLimp"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── SECCIÓN B: COMPARACIÓN DE ARCHIVOS ─── -->
+  <div class="proc-panel" id="panelComparar">
+    <div class="proc-hdr" onclick="togglePanel('panelComparar','togComp')">
+      <div class="proc-hdr-ttl">
+        <div class="card-ico" style="width:24px;height:24px;font-size:13px;">🔄</div>
+        Comparación de Archivos
+      </div>
+      <div class="proc-toggle open" id="togComp">▼</div>
+    </div>
+    <div id="bodyComp" style="border-top:2.5px solid var(--lime);">
+      <div style="padding:16px;display:flex;flex-direction:column;gap:14px;">
+        <!-- Drop zone -->
+        <div class="drop-zone" id="dropZone"
+          ondragover="event.preventDefault();this.classList.add('over')"
+          ondragleave="this.classList.remove('over')"
+          ondrop="compDrop(event)">
+          <div class="drop-zone-icon">📂</div>
+          <div>Arrastra un CSV aquí o <label for="compFile">selecciona archivo</label></div>
+          <div style="font-size:11px;margin-top:4px;opacity:.7;">Separador ; o , · Encoding UTF-8 o Latin-1</div>
+          <input type="file" id="compFile" accept=".csv" style="display:none" onchange="compSubir(this.files[0])"/>
+        </div>
+        <!-- Progreso -->
+        <div class="proc-bar-wrap">
+          <div class="proc-bar-track"><div class="proc-bar-fill" id="barComp"></div></div>
+          <div class="proc-log" id="logComp">Sube un archivo para comenzar</div>
+        </div>
+        <!-- Tabs resultado -->
+        <div id="compResultado" style="display:none;border:1px solid var(--border);border-radius:var(--rs);overflow:hidden;">
+          <div class="tab-row">
+            <button class="tab-btn on" onclick="compTab('nuevas',this)">
+              Nuevas <span class="tab-badge" id="badgeN">0</span>
+            </button>
+            <button class="tab-btn" onclick="compTab('duplicadas',this)">
+              Duplicadas <span class="tab-badge" id="badgeD">0</span>
+            </button>
+            <button class="tab-btn" onclick="compTab('posibles',this)">
+              Posibles duplicadas <span class="tab-badge" id="badgeP">0</span>
+            </button>
+          </div>
+          <div class="tab-content on" id="tabNuevas">
+            <div class="comp-tbl-wrap"><table class="comp-tbl" id="tblNuevas"><thead></thead><tbody></tbody></table></div>
+          </div>
+          <div class="tab-content" id="tabDuplicadas">
+            <div class="comp-tbl-wrap"><table class="comp-tbl" id="tblDuplicadas"><thead></thead><tbody></tbody></table></div>
+          </div>
+          <div class="tab-content" id="tabPosibles">
+            <div class="comp-tbl-wrap"><table class="comp-tbl" id="tblPosibles"><thead></thead><tbody></tbody></table></div>
+          </div>
+          <div style="padding:12px 14px;border-top:1px solid var(--border);display:flex;gap:8px;flex-wrap:wrap;background:var(--navy-10);">
+            <button class="btn btn-export" style="font-size:11.5px;padding:6px 14px;" onclick="compDescargar('nuevas')">⬇ CSV Nuevas</button>
+            <button class="btn btn-export" style="font-size:11.5px;padding:6px 14px;" onclick="compDescargar('duplicadas')">⬇ CSV Duplicadas</button>
+            <button class="btn btn-export" style="font-size:11.5px;padding:6px 14px;" onclick="compDescargar('posibles')">⬇ CSV Posibles</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── SECCIÓN C: EXPORTACIÓN GOOGLE SHEETS CON IA ─── -->
+  <div class="proc-panel" id="panelSheets">
+    <div class="proc-hdr" onclick="togglePanel('panelSheets','togSheets')">
+      <div class="proc-hdr-ttl">
+        <div class="card-ico" style="width:24px;height:24px;font-size:13px;">📊</div>
+        Exportación Google Sheets con IA
+        <span style="background:var(--lime);color:var(--navy);font-size:9px;font-weight:800;padding:2px 8px;border-radius:20px;letter-spacing:.5px;">IA</span>
+      </div>
+      <div class="proc-toggle open" id="togSheets">▼</div>
+    </div>
+    <div class="proc-body" id="bodySheets" style="display:grid;">
+      <div class="proc-card" style="grid-column:1/-1;">
+        <div class="kpi-grid" id="sheetsKpis" style="grid-template-columns:repeat(3,1fr);margin-bottom:0;"></div>
+      </div>
+      <div class="proc-card">
+        <div class="proc-card-ttl"><div class="proc-card-ico">🤖</div>Preparar con IA</div>
+        <div class="proc-card-desc">Revisa inconsistencias: nombres en minúsculas, teléfonos con formato incorrecto, NITs con caracteres inválidos.</div>
+        <div class="proc-controls">
+          <button class="btn btn-primary" style="padding:7px 16px;font-size:11.5px;" id="btnPrepIA" onclick="sheetsPrepararIA()">🤖 Preparar con IA</button>
+        </div>
+        <div class="proc-bar-wrap">
+          <div class="proc-bar-track"><div class="proc-bar-fill" id="barPrepIA"></div></div>
+          <div class="proc-log" id="logPrepIA">Listo para ejecutar</div>
+        </div>
+      </div>
+      <div class="proc-card">
+        <div class="proc-card-ttl"><div class="proc-card-ico">📤</div>Exportar a Sheets</div>
+        <div class="proc-card-desc">Envía todos los registros al workflow n8n de exportación a Google Sheets.</div>
+        <div class="proc-controls">
+          <button class="btn btn-export" style="padding:7px 16px;font-size:11.5px;" id="btnExportSheets" onclick="sheetsExportar()">📤 Exportar a Google Sheets</button>
+        </div>
+        <div class="proc-bar-wrap">
+          <div class="proc-bar-track"><div class="proc-bar-fill" id="barExportSheets"></div></div>
+          <div class="proc-log" id="logExportSheets">Listo para ejecutar</div>
+        </div>
+      </div>
+      <!-- Panel correcciones IA -->
+      <div class="proc-card" id="panelCorrecciones" style="grid-column:1/-1;display:none;">
+        <div class="proc-card-ttl"><div class="proc-card-ico">✏️</div>Correcciones IA</div>
+        <div style="overflow-x:auto;max-height:280px;overflow-y:auto;">
+          <table class="corr-table" id="tblCorrecciones">
+            <thead><tr><th>NIT</th><th>Campo</th><th>Valor Original</th><th>Valor Sugerido</th><th>Razón</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── SECCIÓN D: BÚSQUEDA DATOSCOLOMBIA ─── -->
+  <div class="proc-panel" id="panelDatos">
+    <div class="proc-hdr" onclick="togglePanel('panelDatos','togDatos')">
+      <div class="proc-hdr-ttl">
+        <div class="card-ico" style="width:24px;height:24px;font-size:13px;">🌐</div>
+        Búsqueda DatosColombia
+        <span style="background:var(--lime);color:var(--navy);font-size:9px;font-weight:800;padding:2px 8px;border-radius:20px;letter-spacing:.5px;">AUTO</span>
+      </div>
+      <div class="proc-toggle open" id="togDatos">▼</div>
+    </div>
+    <div class="proc-body" id="bodyDatos" style="display:grid;">
+      <!-- Banner de estado -->
+      <div class="banner-estado" id="bannerDatos" style="grid-column:1/-1;">
+        <div class="banner-dot" id="datosDot"></div>
+        <span><span class="banner-label">Última ejecución:</span><span id="datosUltima">—</span></span>
+        <span><span class="banner-label">Próxima:</span><span id="datosProxima">—</span></span>
+        <div class="banner-toggle" onclick="datosToggleAuto()">
+          <span>Activar cada 4 meses</span>
+          <div class="toggle-sw" id="datosToggleSw"></div>
+        </div>
+      </div>
+      <div class="proc-card">
+        <div class="proc-card-ttl"><div class="proc-card-ico">🔍</div>Buscar en datos.gov.co</div>
+        <div class="proc-card-desc">Consulta el Registro Único Empresarial en datos.gov.co (CIIU 4663 y 4752) y cruza con Supabase usando NIT y fecha de matrícula.</div>
+        <div class="proc-controls">
+          <button class="btn btn-primary" style="padding:7px 16px;font-size:11.5px;" id="btnBuscarDatos" onclick="datosBuscar()">🔍 Buscar ahora</button>
+        </div>
+        <div class="proc-bar-wrap">
+          <div class="proc-bar-track"><div class="proc-bar-fill" id="barDatos"></div></div>
+          <div class="proc-log" id="logDatos">Listo para ejecutar</div>
+        </div>
+        <div class="proc-stats" id="statDatos"></div>
+        <button class="btn btn-outline" id="btnVerComp" style="display:none;font-size:11.5px;padding:6px 14px;" onclick="datosVerComparacion()">Ver en Comparación →</button>
+      </div>
+    </div>
+  </div>
+
   <!-- EMPTY -->
   <div id="emptyState">
     <div class="empty">
       <div class="empty-ico">🗺️</div>
       <div class="empty-ttl">Cargue su base de datos para iniciar</div>
-      <div class="empty-sub">Haga clic en <strong>Cargar / Actualizar Excel</strong> para importar el archivo con el directorio de ferreterías y distribuidores por territorio.</div>
+      <div class="empty-sub">Haga clic en <strong>Cargar desde API</strong> para conectar con la base de datos local, o en <strong>Cargar / Actualizar Excel</strong> para importar un archivo.</div>
       <br/>
       <button class="btn btn-primary" onclick="loadDemo()" style="margin-top:8px;">Cargar datos de muestra</button>
     </div>
@@ -534,19 +1018,11 @@ tbody td{padding:9px 13px;font-size:12.5px;}
         </select>
       </div>
       <div class="fg">
-        <span class="fg-lbl">Sector CIIU</span>
-        <select id="fSector" onchange="applyF()">
-          <option value="">Todos</option>
-          <option value="Construcción">Construcción</option>
-          <option value="Comercio">Comercio</option>
-        </select>
-      </div>
-      <div class="fg">
         <span class="fg-lbl">Buscar Razón Social / NIT</span>
         <input type="text" id="fSearch" placeholder="Escriba para buscar…" oninput="applyF()"/>
       </div>
       <button class="btn btn-outline" onclick="resetF()">✕ Limpiar</button>
-      
+      <button class="btn btn-export" onclick="exportData()">⬇ Exportar</button>
     </div>
 
     <!-- MAP + RANKING -->
@@ -599,11 +1075,9 @@ tbody td{padding:9px 13px;font-size:12.5px;}
         <div class="tbl-info" id="tblInfo"></div>
         <div style="display:flex;gap:14px;align-items:center;">
           <div style="display:flex;gap:6px;font-size:10.5px;align-items:center;">
-            <button class="btn btn-export" onclick="exportData()">⬇ Exportar</button>
             <span class="sc-chip sca" style="min-width:auto;padding:0 7px;height:18px;font-size:10px;">≥70</span>Alta
             <span class="sc-chip scb" style="min-width:auto;padding:0 7px;height:18px;font-size:10px;">40–69</span>Media
             <span class="sc-chip scc" style="min-width:auto;padding:0 7px;height:18px;font-size:10px;">&lt;40</span>Baja
-            
           </div>
           <div class="pg" id="pg"></div>
         </div>
@@ -639,14 +1113,6 @@ function calcScore(d){
   const a=d.antiguedad_anos>=10?40:d.antiguedad_anos>=5?30:d.antiguedad_anos>=2?15:5;
   const f=(d.num_fuentes/3)*25;
   return Math.round(r+a+f);
-}
-
-/* ═══════════════════════════════════════════ SECTOR */
-function getSector(ciiu){
-  const code=parseInt(String(ciiu||'').trim());
-  if([4111,4112,4210,4220,4290].includes(code)) return 'Construcción';
-  if([4663,4752].includes(code)) return 'Comercio';
-  return 'Otro';
 }
 
 /* ═══════════════════════════════════════════ NORMALIZE */
@@ -691,8 +1157,7 @@ function norm(r,i){
     dias_renovacion:diasR,
     antiguedad_anos:anosA,
     formatted_address:String(r.formatted_address||r.direccion||'').trim(),
-    score,prio,
-    sector: getSector(r.CIIU||r.ciiu||r.Ciiu||r['CIIU ']||'')
+    score,prio
   };
 }
 
@@ -716,6 +1181,26 @@ function loadFile(e){
   rd.readAsArrayBuffer(f);
 }
 
+async function loadFromApi(){
+  const btn=document.getElementById('btnApi');
+  const orig=btn.innerHTML;
+  btn.innerHTML='<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg> Cargando…';
+  btn.disabled=true;
+  document.getElementById('loader').classList.add('on');
+  try{
+    const r=await fetch('http://localhost:8000/export-rtm-supabase');
+    if(!r.ok) throw new Error(`HTTP ${r.status}`);
+    const rows=await r.json();
+    setData(rows.map((row,i)=>norm(row,i)));
+  }catch(e){
+    alert('No se pudo conectar con la API en localhost:8000.\n\nVerifica que el contenedor python-api esté corriendo.\n\nDetalle: '+e.message);
+  }finally{
+    document.getElementById('loader').classList.remove('on');
+    btn.innerHTML=orig;
+    btn.disabled=false;
+  }
+}
+
 function setData(data){
   RAW=data;
   populateDropdowns();
@@ -736,12 +1221,11 @@ function populateDropdowns(){
       const o=document.createElement('option');
       o.value=o.textContent=v;s.appendChild(o);
     });
-    // keep previous value if still valid
     if([...s.options].some(o=>o.value===c)) s.value=c;
   };
   fillSel('fDpto',RAW.map(r=>r.departamento),'Todos');
   fillSel('fCamara',RAW.map(r=>r.camara_comercio),'Todas');
-  updateCiudades(); // populate cities based on current dpto
+  updateCiudades();
 }
 
 function updateCiudades(){
@@ -754,7 +1238,6 @@ function updateCiudades(){
     const o=document.createElement('option');
     o.value=o.textContent=v;s.appendChild(o);
   });
-  // restore previous city only if it belongs to new dpto
   if([...s.options].some(o=>o.value===prev)) s.value=prev;
   else s.value='';
 }
@@ -767,7 +1250,7 @@ function onDptoChange(){
 /* ═══════════════════════════════════════════ FILTERS */
 function applyF(){
   const dpto=v('fDpto'),ciudad=v('fCiudad'),estado=v('fEstado'),
-        prio=v('fPrio'),camara=v('fCamara'),sector=v('fSector'),
+        prio=v('fPrio'),camara=v('fCamara'),
         srch=document.getElementById('fSearch').value.toLowerCase();
   FLT=RAW.filter(r=>{
     if(dpto&&r.departamento!==dpto)return false;
@@ -775,7 +1258,6 @@ function applyF(){
     if(estado&&r.estado_matricula!==estado)return false;
     if(prio&&r.prio!==prio)return false;
     if(camara&&r.camara_comercio!==camara)return false;
-    if(sector&&r.sector!==sector)return false;
     if(srch&&!r.razon_social.toLowerCase().includes(srch)&&!r.nit.includes(srch))return false;
     return true;
   });
@@ -789,9 +1271,9 @@ function applyF(){
 }
 function v(id){return document.getElementById(id).value;}
 function resetF(){
-  ['fDpto','fEstado','fPrio','fCamara','fSector'].forEach(id=>document.getElementById(id).value='');
+  ['fDpto','fEstado','fPrio','fCamara'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('fSearch').value='';
-  updateCiudades(); // repopulate all cities, then clear city too
+  updateCiudades();
   document.getElementById('fCiudad').value='';
   applyF();
 }
@@ -814,9 +1296,6 @@ function renderKPI(){
     {ico:'🏢',lbl:'Total Empresas',val:d.length.toLocaleString('es-CO'),sub:`${ciudades} ciudades · ${dptos} dptos`,hi:false,badge:null},
     {ico:'✅',lbl:'Matrículas Activas',val:activas.toLocaleString('es-CO'),sub:`${Math.round(activas/n*100)}% del total filtrado`,hi:false,badge:null},
     {ico:'🎯',lbl:'Prioridad Alta (A)',val:pA.toLocaleString('es-CO'),sub:'Score ≥ 70 puntos',hi:true,badge:'CRÍTICO'},
-    {ico:'📈',lbl:'Score Promedio',val:avg,sub:`Máx. teórico 100 pts`,hi:false,badge:null},
-    {ico:'🔔',lbl:'Renovación ≤ 90 días',val:ren90.toLocaleString('es-CO'),sub:'Ventana crítica de contacto',hi:false,badge:null},
-    {ico:'📅',lbl:'Renovación ≤ 365 días',val:ren365.toLocaleString('es-CO'),sub:'Pipeline anual',hi:false,badge:null},
   ].map(k=>`
     <div class="kpi ${k.hi?'hi':''}">
       ${k.badge?`<div class="kpi-badge">${k.badge}</div>`:''}
@@ -838,7 +1317,6 @@ function renderMap(){
   }
   mLayer.clearLayers();
 
-  // ── Aggregate cities for cluster bubbles ──
   const cm={};
   FLT.forEach(r=>{
     if(!r.lat||!r.lng)return;
@@ -851,7 +1329,6 @@ function renderMap(){
   const cities=Object.values(cm);
   const maxCnt=Math.max(...cities.map(c=>c.cnt),1);
 
-  // ── City bubble markers ──
   cities.forEach(c=>{
     const avg=Math.round(c.sSum/c.cnt);
     const col=avg>=70?'#C4D600':avg>=40?'#F59E0B':'#EF4444';
@@ -861,7 +1338,6 @@ function renderMap(){
       weight:1.5,fillOpacity:0.88
     });
 
-    // Build company list rows for popup
     const compRows=c.companies.map(r=>{
       const sc=r.score>=70?'#166534':r.score>=40?'#92400E':'#991B1B';
       const bg=r.score>=70?'#dcfce7':r.score>=40?'#fef9c3':'#fee2e2';
@@ -898,7 +1374,6 @@ function renderMap(){
     mLayer.addLayer(m);
   });
 
-  // ── Individual company markers — tooltip on hover, popup on click ──
   const withCoords=FLT.filter(r=>r.lat&&r.lng);
   withCoords.forEach(r=>{
     const col=r.score>=70?'#C4D600':r.score>=40?'#F59E0B':'#EF4444';
@@ -906,15 +1381,10 @@ function renderMap(){
     const shortAddr=addr.length>55?addr.substring(0,53)+'…':addr;
 
     const dot=L.circleMarker([r.lat,r.lng],{
-      radius:6,
-      fillColor:col,
-      color:'#071D49',
-      weight:1.5,
-      fillOpacity:1,
-      zIndexOffset:200
+      radius:6,fillColor:col,color:'#071D49',
+      weight:1.5,fillOpacity:1,zIndexOffset:200
     });
 
-    // Hover tooltip: nombre + dirección
     dot.bindTooltip(`
       <div style="font-family:'Outfit',sans-serif;padding:2px 2px;max-width:200px;">
         <div style="font-weight:800;font-size:11px;color:#071D49;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:196px;">${r.razon_social||'—'}</div>
@@ -923,7 +1393,6 @@ function renderMap(){
       {permanent:false,direction:'top',offset:[0,-8],className:'tip-empresa'}
     );
 
-    // Click popup: ficha completa
     dot.bindPopup(`<div class="pop" style="min-width:240px;">
       <div class="pop-city">${r.razon_social}</div>
       <div class="pop-dept">${r.ciudad} · ${r.departamento}</div>
@@ -977,7 +1446,6 @@ function renderRank(){
 function renderCharts(){
   const d=FLT, n=d.length||1;
 
-  // Chart 1: Score por Departamento
   const dp={};
   d.forEach(r=>{if(!dp[r.departamento])dp[r.departamento]=[];dp[r.departamento].push(r.score);});
   const dpArr=Object.entries(dp)
@@ -991,7 +1459,6 @@ function renderCharts(){
       <div class="b-val">${x.val}</div>
     </div>`).join('')||'<div style="color:var(--muted);font-size:13px;padding:10px;">Sin datos</div>';
 
-  // Chart 2: Prioridad
   const pMap={A:{col:'#C4D600',txt:'Prioridad Alta',desc:'Score ≥ 70'},B:{col:'#F59E0B',txt:'Prioridad Media',desc:'Score 40–69'},C:{col:'#EF4444',txt:'Prioridad Baja',desc:'Score < 40'}};
   const pCnt={A:d.filter(r=>r.prio==='A').length,B:d.filter(r=>r.prio==='B').length,C:d.filter(r=>r.prio==='C').length};
   const pMax=Math.max(...Object.values(pCnt),1);
@@ -1105,6 +1572,604 @@ function exportData(){
   XLSX.utils.book_append_sheet(wb,ws,'Territorios');
   XLSX.writeFile(wb,`Territorios_Estrategicos_${new Date().toISOString().slice(0,10)}.xlsx`);
 }
+
+/* ═══════════════════════════════════════════ CENTRO DE PROCESOS */
+let _mapsCtrl = null;
+
+function toggleProc(){
+  const body = document.getElementById('procBody');
+  const tog  = document.getElementById('procToggle');
+  const open = body.style.display !== 'none';
+  body.style.display = open ? 'none' : 'grid';
+  tog.classList.toggle('open', !open);
+}
+
+function _sp(barId, logId, pct, msg, state='run'){
+  const bar = document.getElementById(barId);
+  const log = document.getElementById(logId);
+  bar.style.width = pct + '%';
+  bar.className = 'proc-bar-fill' + (state==='err'?' err':state==='run'?' run':'');
+  log.textContent = msg;
+  log.className   = 'proc-log' + (state==='ok'?' ok':state==='err'?' err':' run');
+}
+
+async function procCargarSupabase(){
+  const btn = document.getElementById('btnProcSB');
+  btn.disabled = true;
+  document.getElementById('statSB').innerHTML = '';
+  _sp('barSB','logSB', 0, 'Iniciando carga…');
+  try{
+    const r = await fetch('http://localhost:8000/enriquecimiento/cargar-supabase?stream=true', {method:'POST'});
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const reader = r.body.getReader();
+    const dec = new TextDecoder();
+    let buf = '';
+    while(true){
+      const {done,value} = await reader.read();
+      if(done) break;
+      buf += dec.decode(value,{stream:true});
+      const lines = buf.split('\n'); buf = lines.pop();
+      for(const line of lines){
+        if(!line.startsWith('data: ')) continue;
+        try{
+          const d = JSON.parse(line.slice(6));
+          if(d.estado==='iniciando'){
+            _sp('barSB','logSB', 1, 'Cargando '+d.total.toLocaleString('es-CO')+' registros en lotes de '+d.batch_size+'…');
+          }else if(d.estado==='progreso'){
+            _sp('barSB','logSB', d.pct||0, d.procesados.toLocaleString('es-CO')+'/'+d.total.toLocaleString('es-CO')+' — '+d.nuevos+' nuevos · '+d.duplicados+' duplicados');
+          }else if(d.estado==='completado'){
+            _sp('barSB','logSB', 100, '✓ Completado: '+d.nuevos.toLocaleString('es-CO')+' nuevos · '+d.duplicados.toLocaleString('es-CO')+' duplicados', 'ok');
+            document.getElementById('statSB').innerHTML=`
+              <div class="ps-item">Total<span class="ps-val">${d.total.toLocaleString('es-CO')}</span></div>
+              <div class="ps-item">Nuevos<span class="ps-val" style="color:var(--success)">${d.nuevos.toLocaleString('es-CO')}</span></div>
+              <div class="ps-item">Duplicados<span class="ps-val" style="color:var(--muted)">${d.duplicados.toLocaleString('es-CO')}</span></div>`;
+          }else if(d.estado==='error'||d.error){
+            _sp('barSB','logSB', 100, '✗ '+(d.error||d.estado), 'err');
+          }
+        }catch(_){}
+      }
+    }
+  }catch(e){
+    _sp('barSB','logSB', 100, '✗ '+e.message, 'err');
+  }finally{ btn.disabled=false; }
+}
+
+async function procEstadoGeo(){
+  const btn = document.getElementById('btnProcEstado');
+  btn.disabled = true;
+  _sp('barEstado','logEstado', 50, 'Consultando Supabase…');
+  document.getElementById('statEstado').innerHTML='';
+  try{
+    const r = await fetch('http://localhost:8000/enriquecimiento/estado-enriquecimiento');
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const d = await r.json();
+    const pct = d.pct_completado || 0;
+    _sp('barEstado','logEstado', pct, '✓ '+pct+'% geocodificado', 'ok');
+    document.getElementById('statEstado').innerHTML=`
+      <div class="ps-item">Total<span class="ps-val">${(d.total||0).toLocaleString('es-CO')}</span></div>
+      <div class="ps-item" style="color:var(--success)">Con coords<span class="ps-val" style="color:var(--success)">${(d.geocodificados||0).toLocaleString('es-CO')}</span></div>
+      <div class="ps-item" style="color:var(--warn)">Pendientes<span class="ps-val" style="color:var(--warn)">${(d.pendientes||0).toLocaleString('es-CO')}</span></div>`;
+  }catch(e){
+    _sp('barEstado','logEstado', 100, '✗ '+e.message, 'err');
+  }finally{ btn.disabled=false; }
+}
+
+async function procEnriquecerMaps(){
+  if(_mapsCtrl) return;
+  document.getElementById('btnProcMaps').disabled  = true;
+  document.getElementById('btnStopMaps').disabled  = false;
+  document.getElementById('statMaps').innerHTML    = '';
+  _sp('barMaps','logMaps', 0, 'Iniciando…');
+  _mapsCtrl = new AbortController();
+  try{
+    const url = 'http://localhost:8000/enriquecimiento/enriquecer-google-maps?stream=true';
+    const r = await fetch(url, {method:'POST', signal:_mapsCtrl.signal});
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const reader = r.body.getReader();
+    const dec    = new TextDecoder();
+    let   buf    = '';
+    while(true){
+      const {done,value} = await reader.read();
+      if(done) break;
+      buf += dec.decode(value,{stream:true});
+      const lines = buf.split('\n'); buf = lines.pop();
+      for(const line of lines){
+        if(!line.startsWith('data: ')) continue;
+        try{
+          const d = JSON.parse(line.slice(6));
+          if(d.estado==='iniciando'){
+            _sp('barMaps','logMaps', 2, 'Procesando '+d.total+' ciudades únicas…');
+          }else if(d.estado==='progreso'){
+            const razonStr = d.razones && Object.keys(d.razones).length
+              ? ' ['+Object.entries(d.razones).map(([k,v])=>k+':'+v).join(', ')+']'
+              : '';
+            const ciudadStr = d.ciudad_actual ? ` · ${d.ciudad_actual}` : '';
+            _sp('barMaps','logMaps', d.pct||0, d.procesados+'/'+d.total+' ciudades — '+d.enriquecidos+' OK · '+d.fallidos+' fallidos'+razonStr+ciudadStr);
+          }else if(d.estado==='completado'){
+            const razonStr = d.razones && Object.keys(d.razones).length
+              ? Object.entries(d.razones).map(([k,v])=>`<div class="ps-item">${k}<span class="ps-val">${v}</span></div>`).join('')
+              : '';
+            _sp('barMaps','logMaps', 100, '✓ '+d.enriquecidos+' enriquecidos · '+d.fallidos+' fallidos', 'ok');
+            document.getElementById('statMaps').innerHTML=`
+              <div class="ps-item">Enriquecidos<span class="ps-val" style="color:var(--success)">${d.enriquecidos}</span></div>
+              <div class="ps-item">Fallidos<span class="ps-val" style="color:var(--warn)">${d.fallidos}</span></div>
+              <div class="ps-item">Total<span class="ps-val">${d.total}</span></div>${razonStr}`;
+          }else if(d.estado==='sin_pendientes'){
+            _sp('barMaps','logMaps', 100, '✓ No hay registros pendientes', 'ok');
+          }else if(d.estado==='error'||d.error){
+            _sp('barMaps','logMaps', 100, '✗ '+(d.error||d.estado), 'err');
+          }
+        }catch(_){}
+      }
+    }
+  }catch(e){
+    if(e.name!=='AbortError') _sp('barMaps','logMaps', 100, '✗ '+e.message, 'err');
+    else _sp('barMaps','logMaps', 0, 'Proceso detenido', 'run');
+  }finally{
+    _mapsCtrl = null;
+    document.getElementById('btnProcMaps').disabled = false;
+    document.getElementById('btnStopMaps').disabled = true;
+  }
+}
+
+function procDetenerMaps(){
+  if(_mapsCtrl){ _mapsCtrl.abort(); }
+}
+
+/* ═══════════════════════════ PORTAFOLIO SCRAPING */
+let _portCtrl = null;
+
+async function procScrapingPortafolio(){
+  if(_portCtrl) return;
+  const limit  = parseInt(document.getElementById('portLimit').value)  || 100;
+  const offset = parseInt(document.getElementById('portOffset').value) || 0;
+  const todos  = document.getElementById('portTodos').checked;
+  document.getElementById('btnProcPort').disabled  = true;
+  document.getElementById('btnStopPort').disabled  = false;
+  document.getElementById('statPort').innerHTML    = '';
+  _sp('barPort','logPort', 0, 'Iniciando scraping…');
+  _portCtrl = new AbortController();
+  try{
+    const url = `http://localhost:8000/enriquecimiento/scraping-portafolio?limit=${limit}&offset=${offset}&stream=true&solo_sin_telefono=${!todos}`;
+    const r = await fetch(url, {method:'POST', signal:_portCtrl.signal});
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const reader = r.body.getReader();
+    const dec    = new TextDecoder();
+    let   buf    = '';
+    while(true){
+      const {done,value} = await reader.read();
+      if(done) break;
+      buf += dec.decode(value,{stream:true});
+      const lines = buf.split('\n'); buf = lines.pop();
+      for(const line of lines){
+        if(!line.startsWith('data: ')) continue;
+        try{
+          const d = JSON.parse(line.slice(6));
+          if(d.estado==='iniciando'){
+            _sp('barPort','logPort', 2, 'Procesando '+d.total+' empresas desde offset '+d.offset+'…');
+          }else if(d.estado==='progreso'){
+            const last = d.ultimo ? ' · '+d.ultimo : '';
+            _sp('barPort','logPort', d.pct||0, d.procesados+'/'+d.total+' — '+d.encontrados+' encontrados · '+d.no_encontrados+' sin resultado'+last);
+          }else if(d.estado==='completado'){
+            _sp('barPort','logPort', 100, '✓ '+d.encontrados+' teléfonos encontrados · '+d.no_encontrados+' sin resultado', 'ok');
+            document.getElementById('statPort').innerHTML=`
+              <div class="ps-item">Con teléfono<span class="ps-val" style="color:var(--success)">${d.encontrados}</span></div>
+              <div class="ps-item">Sin resultado<span class="ps-val" style="color:var(--warn)">${d.no_encontrados}</span></div>
+              <div class="ps-item">Total<span class="ps-val">${d.total}</span></div>`;
+          }else if(d.estado==='sin_pendientes'){
+            _sp('barPort','logPort', 100, '✓ No hay empresas sin teléfono pendientes', 'ok');
+          }else if(d.estado==='error'||d.error){
+            _sp('barPort','logPort', 100, '✗ '+(d.error||d.estado), 'err');
+          }
+        }catch(_){}
+      }
+    }
+  }catch(e){
+    if(e.name!=='AbortError') _sp('barPort','logPort', 100, '✗ '+e.message, 'err');
+    else _sp('barPort','logPort', 0, 'Proceso detenido', 'run');
+  }finally{
+    _portCtrl = null;
+    document.getElementById('btnProcPort').disabled = false;
+    document.getElementById('btnStopPort').disabled = true;
+  }
+}
+
+function procDetenerPortafolio(){
+  if(_portCtrl){ _portCtrl.abort(); }
+}
+
+/* ═══════════════════════════════════════ MIGRAR SUPABASE */
+async function procMigrar(){
+  if(!confirm('⚠️ Esto BORRARÁ todos los registros de Supabase y recargará el CSV.\n¿Ya ejecutaste el SQL de creación de tabla en el SQL Editor de Supabase?\n\nContinuar?')) return;
+  document.getElementById('btnProcMig').disabled = true;
+  _sp('barMig','logMig', 2, 'Iniciando migración…', 'run');
+  try{
+    const r = await fetch('http://localhost:8000/enriquecimiento/migrar-supabase?stream=true',{method:'POST'});
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const reader=r.body.getReader(), dec=new TextDecoder(); let buf='';
+    while(true){
+      const {done,value}=await reader.read(); if(done) break;
+      buf+=dec.decode(value,{stream:true});
+      const lines=buf.split('\n'); buf=lines.pop();
+      for(const line of lines){
+        if(!line.startsWith('data: ')) continue;
+        try{
+          const d=JSON.parse(line.slice(6));
+          if(d.estado==='borrando') _sp('barMig','logMig', 5, 'Eliminando registros…', 'run');
+          else if(d.estado==='cargando') _sp('barMig','logMig', d.pct||10, `Cargando ${d.procesados||0}/${d.total||0}…`, 'run');
+          else if(d.estado==='completado'){
+            _sp('barMig','logMig', 100, `✓ ${d.nuevos} registros cargados`, 'ok');
+            document.getElementById('statMig').innerHTML=`<div class="ps-item">Cargados<span class="ps-val">${d.nuevos}</span></div><div class="ps-item">Total CSV<span class="ps-val">${d.total}</span></div>`;
+          }else if(d.estado==='error') _sp('barMig','logMig', 100, '✗ '+d.error, 'err');
+        }catch(_){}
+      }
+    }
+  }catch(e){ _sp('barMig','logMig', 100, '✗ '+e.message, 'err'); }
+  finally{ document.getElementById('btnProcMig').disabled=false; }
+}
+
+/* ═══════════════════════════════════════ PANEL TOGGLE */
+function togglePanel(panelId, togId){
+  const body=document.getElementById(panelId).querySelector('[id^="body"]');
+  const tog=document.getElementById(togId);
+  if(!body) return;
+  const open=body.style.display!=='none';
+  body.style.display=open?'none':'';
+  if(tog) tog.classList.toggle('open',!open);
+}
+
+/* ═══════════════════════════════════════ SECCIÓN A: LIMPIEZA IA */
+async function limpAnalizar(){
+  const btn=document.getElementById('btnAnalizar');
+  btn.disabled=true;
+  _sp('barAnal','logAnal', 20, 'Consultando Supabase…', 'run');
+  try{
+    const r=await fetch('http://localhost:8000/limpieza/metricas');
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const d=await r.json();
+    if(d.error) throw new Error(d.error);
+    _sp('barAnal','logAnal', 100, '✓ Métricas obtenidas', 'ok');
+    const kpis=[
+      {ico:'📞',lbl:'Sin teléfono',val:d.sin_telefono,pct:d.total?Math.round(d.sin_telefono/d.total*100):0},
+      {ico:'📧',lbl:'Sin email',val:d.sin_email,pct:d.total?Math.round(d.sin_email/d.total*100):0},
+      {ico:'🪪',lbl:'Sin NIT',val:d.sin_nit,pct:d.total?Math.round(d.sin_nit/d.total*100):0},
+      {ico:'🔁',lbl:'NITs duplicados',val:d.duplicados_grupos,pct:null},
+    ];
+    document.getElementById('limpKpis').innerHTML=kpis.map(k=>`
+      <div class="kpi">
+        <div class="kpi-icon">${k.ico}</div>
+        <div class="kpi-lbl">${k.lbl}</div>
+        <div class="kpi-val">${(k.val||0).toLocaleString()}</div>
+        <div class="kpi-sub">${k.pct!==null?k.pct+'% del total':d.duplicados_registros+' registros extra'}</div>
+      </div>`).join('');
+  }catch(e){ _sp('barAnal','logAnal', 100, '✗ '+e.message, 'err'); }
+  finally{ btn.disabled=false; }
+}
+
+async function limpEjecutar(){
+  if(!confirm('¿Eliminar registros duplicados por NIT? Se conservará el más reciente de cada grupo.')) return;
+  const btn=document.getElementById('btnLimpiar');
+  btn.disabled=true;
+  _sp('barLimp','logLimp', 2, 'Iniciando limpieza…', 'run');
+  document.getElementById('statLimp').innerHTML='';
+  try{
+    const r=await fetch('http://localhost:8000/limpieza/ejecutar?stream=true',{method:'POST'});
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const reader=r.body.getReader(), dec=new TextDecoder(); let buf='';
+    while(true){
+      const {done,value}=await reader.read(); if(done) break;
+      buf+=dec.decode(value,{stream:true});
+      const lines=buf.split('\n'); buf=lines.pop();
+      for(const line of lines){
+        if(!line.startsWith('data: ')) continue;
+        try{
+          const d=JSON.parse(line.slice(6));
+          if(d.estado==='iniciando') _sp('barLimp','logLimp', 2, d.msg||'Cargando…', 'run');
+          else if(d.estado==='progreso') _sp('barLimp','logLimp', d.pct||0, `${d.procesados}/${d.total} grupos · ${d.eliminados} eliminados`, 'run');
+          else if(d.estado==='completado'){
+            _sp('barLimp','logLimp', 100, `✓ ${d.eliminados} duplicados eliminados`, 'ok');
+            document.getElementById('statLimp').innerHTML=`<div class="ps-item">Eliminados<span class="ps-val" style="color:var(--success)">${d.eliminados}</span></div><div class="ps-item">Grupos<span class="ps-val">${d.grupos_procesados}</span></div>`;
+          }else if(d.estado==='error') _sp('barLimp','logLimp', 100, '✗ '+d.error, 'err');
+        }catch(_){}
+      }
+    }
+  }catch(e){ _sp('barLimp','logLimp', 100, '✗ '+e.message, 'err'); }
+  finally{ btn.disabled=false; }
+}
+
+/* ═══════════════════════════════════════ SECCIÓN B: COMPARACIÓN */
+let _compData = {nuevas:[], duplicadas:[], posibles:[]};
+let _compTabActiva = 'nuevas';
+
+function compDrop(e){
+  e.preventDefault();
+  document.getElementById('dropZone').classList.remove('over');
+  const f=e.dataTransfer.files[0];
+  if(f) compSubir(f);
+}
+
+async function compSubir(archivo){
+  if(!archivo) return;
+  _sp('barComp','logComp', 10, `Subiendo ${archivo.name}…`, 'run');
+  document.getElementById('compResultado').style.display='none';
+  const fd=new FormData(); fd.append('archivo',archivo);
+  try{
+    const r=await fetch('http://localhost:8000/comparar/subir',{method:'POST',body:fd});
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const d=await r.json();
+    if(d.detail) throw new Error(d.detail);
+    _compData={nuevas:d.nuevas||[], duplicadas:d.duplicadas||[], posibles:d.posibles||[]};
+    _sp('barComp','logComp', 100, `✓ ${d.total} registros procesados`, 'ok');
+    document.getElementById('badgeN').textContent=_compData.nuevas.length;
+    document.getElementById('badgeD').textContent=_compData.duplicadas.length;
+    document.getElementById('badgeP').textContent=_compData.posibles.length;
+    compRenderTab(_compTabActiva);
+    document.getElementById('compResultado').style.display='';
+  }catch(e){ _sp('barComp','logComp', 100, '✗ '+e.message, 'err'); }
+}
+
+function compTab(cat, btn){
+  _compTabActiva=cat;
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('on'));
+  if(btn) btn.classList.add('on');
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('on'));
+  const tabMap={nuevas:'tabNuevas', duplicadas:'tabDuplicadas', posibles:'tabPosibles'};
+  document.getElementById(tabMap[cat]).classList.add('on');
+  compRenderTab(cat);
+}
+
+function compRenderTab(cat){
+  const filas=_compData[cat]||[];
+  const esPosibles=cat==='posibles';
+  const cols=['razon_social','nit','ciudad','fecha_matricula','estado'];
+  const thead=`<tr>${cols.map(c=>`<th>${c.replace('_',' ')}</th>`).join('')}${esPosibles?'<th>Coincide con</th>':''}</tr>`;
+  const tbody=filas.map(f=>`<tr>
+    ${cols.map(c=>`<td>${f[c]||'—'}</td>`).join('')}
+    ${esPosibles?`<td><div class="pf">${f.coincide_con?.razon_social||'—'}</div><div class="sub">${f.coincide_con?.nit||''}</div></td>`:''}
+  </tr>`).join('');
+  const tbl=document.getElementById('tbl'+cat.charAt(0).toUpperCase()+cat.slice(1));
+  if(tbl){ tbl.querySelector('thead').innerHTML=thead; tbl.querySelector('tbody').innerHTML=tbody||'<tr><td colspan="10" style="text-align:center;padding:20px;color:var(--muted);">Sin registros</td></tr>'; }
+}
+
+function _csvFromArray(arr){
+  if(!arr.length) return '';
+  const cols=Object.keys(arr[0]);
+  return [cols.join(';'),...arr.map(r=>cols.map(c=>JSON.stringify(r[c]||'')).join(';'))].join('\n');
+}
+
+function compDescargar(cat){
+  const filas=_compData[cat]||[];
+  if(!filas.length){ alert('No hay registros en esta categoría'); return; }
+  const csv=_csvFromArray(filas);
+  const blob=new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download=`ferreterias_${cat}.csv`; a.click();
+}
+
+/* ═══════════════════════════════════════ SECCIÓN C: SHEETS */
+async function sheetsCargarMetricas(){
+  try{
+    const r=await fetch('http://localhost:8000/sheets/metricas');
+    if(!r.ok) return;
+    const d=await r.json();
+  }catch(_){}
+}
+sheetsCargarMetricas();
+
+async function sheetsPrepararIA(){
+  const btn=document.getElementById('btnPrepIA');
+  btn.disabled=true;
+  _sp('barPrepIA','logPrepIA', 2, 'Iniciando análisis IA…', 'run');
+  document.getElementById('panelCorrecciones').style.display='none';
+  try{
+    const r=await fetch('http://localhost:8000/sheets/preparar-ia?stream=true',{method:'POST'});
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const reader=r.body.getReader(), dec=new TextDecoder(); let buf='';
+    let todasCorr=[];
+    while(true){
+      const {done,value}=await reader.read(); if(done) break;
+      buf+=dec.decode(value,{stream:true});
+      const lines=buf.split('\n'); buf=lines.pop();
+      for(const line of lines){
+        if(!line.startsWith('data: ')) continue;
+        try{
+          const d=JSON.parse(line.slice(6));
+          if(d.estado==='iniciando') _sp('barPrepIA','logPrepIA', 5, d.msg||'Analizando…', 'run');
+          else if(d.estado==='analizando') _sp('barPrepIA','logPrepIA', 10, `Analizando ${d.total} registros…`, 'run');
+          else if(d.estado==='progreso') _sp('barPrepIA','logPrepIA', d.pct||50, `Procesando…`, 'run');
+          else if(d.estado==='completado'){
+            todasCorr=d.correcciones||[];
+            _sp('barPrepIA','logPrepIA', 100, `✓ ${d.total_correcciones} correcciones encontradas`, 'ok');
+            const tbody=todasCorr.map(c=>`<tr><td>${c.nit||'—'}</td><td>${c.campo}</td><td class="corr-old">${c.valor_original}</td><td class="corr-new">${c.valor_sugerido}</td><td>${c.razon}</td></tr>`).join('');
+            document.getElementById('tblCorrecciones').querySelector('tbody').innerHTML=tbody||'<tr><td colspan="5" style="text-align:center;padding:12px;color:var(--success)">✓ Sin inconsistencias detectadas</td></tr>';
+            document.getElementById('panelCorrecciones').style.display=todasCorr.length?'':'none';
+            if(todasCorr.length) document.getElementById('panelCorrecciones').style.display='';
+          }else if(d.estado==='error') _sp('barPrepIA','logPrepIA', 100, '✗ '+d.error, 'err');
+        }catch(_){}
+      }
+    }
+  }catch(e){ _sp('barPrepIA','logPrepIA', 100, '✗ '+e.message, 'err'); }
+  finally{ btn.disabled=false; }
+}
+
+async function sheetsExportar(){
+  const btn=document.getElementById('btnExportSheets');
+  btn.disabled=true;
+  _sp('barExportSheets','logExportSheets', 20, 'Enviando a n8n…', 'run');
+  try{
+    const r=await fetch('http://localhost:5678/webhook/orquestador-proceso',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({tipo:'exportar_sheets'}),
+    });
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    _sp('barExportSheets','logExportSheets', 100, '✓ Proceso iniciado en n8n — revisa el Sheet en unos segundos', 'ok');
+  }catch(e){ _sp('barExportSheets','logExportSheets', 100, '✗ '+e.message, 'err'); }
+  finally{ btn.disabled=false; }
+}
+
+/* ═══════════════════════════════════════ SECCIÓN D: DATOSCOLOMBIA */
+let _datosUltimoResultId=null;
+let _datosAutoActivo=false;
+
+async function datosCargarEstado(){
+  try{
+    const r=await fetch('http://localhost:8000/datoscolombia/estado');
+    if(!r.ok) return;
+    const d=await r.json();
+    document.getElementById('datosUltima').textContent=d.ultima_ejecucion||'Nunca';
+    document.getElementById('datosProxima').textContent=d.proxima_ejecucion||'—';
+    _datosAutoActivo=!!d.automatizacion_activa;
+    const sw=document.getElementById('datosToggleSw');
+    sw.classList.toggle('on',_datosAutoActivo);
+    const dot=document.getElementById('datosDot');
+    dot.classList.toggle('ok',!!d.ultima_ejecucion);
+    if(d.ultimo_resultado_id) _datosUltimoResultId=d.ultimo_resultado_id;
+  }catch(_){}
+}
+datosCargarEstado();
+
+async function datosToggleAuto(){
+  _datosAutoActivo=!_datosAutoActivo;
+  document.getElementById('datosToggleSw').classList.toggle('on',_datosAutoActivo);
+  try{
+    await fetch(`http://localhost:8000/datoscolombia/activar?activo=${_datosAutoActivo}`,{method:'POST'});
+  }catch(_){}
+}
+
+async function datosBuscar(){
+  const btn=document.getElementById('btnBuscarDatos');
+  btn.disabled=true;
+  _sp('barDatos','logDatos', 5, 'Consultando datos.gov.co…', 'run');
+  document.getElementById('statDatos').innerHTML='';
+  document.getElementById('btnVerComp').style.display='none';
+  try{
+    const r=await fetch('http://localhost:8000/datoscolombia/buscar?stream=true',{method:'POST'});
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const reader=r.body.getReader(), dec=new TextDecoder(); let buf='';
+    while(true){
+      const {done,value}=await reader.read(); if(done) break;
+      buf+=dec.decode(value,{stream:true});
+      const lines=buf.split('\n'); buf=lines.pop();
+      for(const line of lines){
+        if(!line.startsWith('data: ')) continue;
+        try{
+          const d=JSON.parse(line.slice(6));
+          if(d.estado==='iniciando') _sp('barDatos','logDatos', 5, 'Conectando a datos.gov.co…', 'run');
+          else if(d.estado==='progreso') _sp('barDatos','logDatos', 50, d.msg||'Cruzando con Supabase…', 'run');
+          else if(d.estado==='aviso') _sp('barDatos','logDatos', 30, d.msg||'Aviso', 'run');
+          else if(d.estado==='completado'){
+            _sp('barDatos','logDatos', 100, `✓ ${d.encontrados} encontrados · ${d.nuevos} nuevos · ${d.existentes} ya existían`, 'ok');
+            document.getElementById('statDatos').innerHTML=`
+              <div class="ps-item">Encontrados<span class="ps-val">${d.encontrados}</span></div>
+              <div class="ps-item">Nuevos<span class="ps-val" style="color:var(--success)">${d.nuevos}</span></div>
+              <div class="ps-item">Ya existían<span class="ps-val">${d.existentes}</span></div>`;
+            if(d.resultado_id){
+              _datosUltimoResultId=d.resultado_id;
+              document.getElementById('btnVerComp').style.display='';
+            }
+            await datosCargarEstado();
+          }else if(d.estado==='error') _sp('barDatos','logDatos', 100, '✗ '+d.error, 'err');
+        }catch(_){}
+      }
+    }
+  }catch(e){ _sp('barDatos','logDatos', 100, '✗ '+e.message, 'err'); }
+  finally{ btn.disabled=false; }
+}
+
+async function datosVerComparacion(){
+  if(!_datosUltimoResultId){ alert('No hay resultado disponible'); return; }
+  try{
+    const r=await fetch(`http://localhost:8000/datoscolombia/resultado/${_datosUltimoResultId}`);
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const d=await r.json();
+    _compData={nuevas:d.nuevas||[], duplicadas:d.duplicadas||[], posibles:d.posibles||[]};
+    document.getElementById('badgeN').textContent=_compData.nuevas.length;
+    document.getElementById('badgeD').textContent=_compData.duplicadas.length;
+    document.getElementById('badgeP').textContent=_compData.posibles.length;
+    _sp('barComp','logComp', 100, '✓ Datos de DatosColombia precargados', 'ok');
+    compRenderTab('nuevas');
+    document.getElementById('compResultado').style.display='';
+    // Scroll a sección B
+    document.getElementById('panelComparar').scrollIntoView({behavior:'smooth'});
+  }catch(e){ alert('Error: '+e.message); }
+}
+
+/* ═══════════════════════════════════════ SECCIÓN E: CHATBOT */
+let _chatHistorial=[];
+let _chatVisible=false;
+
+function chatToggle(){
+  _chatVisible=!_chatVisible;
+  document.getElementById('chatPanel').style.display=_chatVisible?'flex':'none';
+  if(_chatVisible) document.getElementById('chatQ').focus();
+}
+
+function _chatAppend(texto, tipo){
+  const msgs=document.getElementById('chatMsgs');
+  const div=document.createElement('div');
+  div.className='chat-msg '+tipo;
+  div.textContent=texto;
+  msgs.appendChild(div);
+  msgs.scrollTop=msgs.scrollHeight;
+}
+
+async function chatEnviar(){
+  const inp=document.getElementById('chatQ');
+  const pregunta=inp.value.trim();
+  if(!pregunta) return;
+  inp.value='';
+  _chatHistorial.push({rol:'user',texto:pregunta});
+  _chatAppend(pregunta,'user');
+  const typing=document.createElement('div');
+  typing.className='chat-msg bot typing'; typing.id='chatTyping'; typing.textContent='Pensando…';
+  document.getElementById('chatMsgs').appendChild(typing);
+  document.getElementById('chatMsgs').scrollTop=9999;
+  try{
+    const r=await fetch('http://localhost:5678/webhook/orquestador',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({pregunta, historial:_chatHistorial.slice(-6)}),
+    });
+    const typing2=document.getElementById('chatTyping');
+    if(typing2) typing2.remove();
+    let respuesta='Sin respuesta';
+    if(r.ok){
+      const ct=r.headers.get('content-type')||'';
+      if(ct.includes('json')){
+        const d=await r.json();
+        respuesta=d.respuesta||d.text||d.output||d.mensaje||JSON.stringify(d);
+      } else {
+        respuesta=await r.text();
+      }
+    } else {
+      respuesta=`Error HTTP ${r.status}`;
+    }
+    _chatHistorial.push({rol:'bot',texto:respuesta});
+    _chatAppend(respuesta,'bot');
+  }catch(e){
+    const typing2=document.getElementById('chatTyping');
+    if(typing2) typing2.remove();
+    _chatAppend('Error: '+e.message,'bot typing');
+  }
+}
 </script>
+
+<!-- ─── CHATBOT FLOTANTE (Sección E) ─── -->
+<div id="chatBubble" onclick="chatToggle()" title="Asistente RTM">💬</div>
+<div id="chatPanel" style="display:none;">
+  <div id="chatHdr">
+    <span>🤖 Asistente RTM</span>
+    <button onclick="chatToggle()" title="Minimizar">—</button>
+  </div>
+  <div id="chatMsgs">
+    <div class="chat-msg bot">¡Hola! Soy el asistente del sistema. Pregúntame sobre ferreterías, estadísticas o procesos.</div>
+  </div>
+  <div id="chatInputRow">
+    <input id="chatQ" type="text" placeholder="Escribe tu pregunta…" onkeydown="if(event.key==='Enter')chatEnviar()"/>
+    <button id="chatSend" onclick="chatEnviar()">➤</button>
+  </div>
+</div>
+
 </body>
 </html>
